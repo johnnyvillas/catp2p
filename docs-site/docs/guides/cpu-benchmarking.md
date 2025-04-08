@@ -10,26 +10,35 @@ CatP2P provides comprehensive CPU benchmarking capabilities to help you understa
 
 CatP2P offers two approaches to CPU assessment:
 
-1. **Information Gathering**: Extracting CPU details like core count and current usage without running performance tests
+1. **Information Gathering**: Extracting CPU details like model name, core count, and current usage without running performance tests
 2. **Performance Testing**: Running actual computations to measure real-world performance
 
 ## Getting CPU Information
 
-You can quickly retrieve basic CPU information using the `ResourceMonitor`:
+You can retrieve detailed CPU information using the `get_cpu_info` function:
 
 ```rust
-use catp2p::resources::monitor::ResourceMonitor;
+use catp2p::benchmark::cpu;
+use catp2p::error::Error;
 
-// Create a resource monitor
-let mut resource_monitor = ResourceMonitor::new_with_default_interval();
-
-// Get current system resources
-let system_resources = resource_monitor.get_current_resources();
-
-// Access CPU information
-println!("CPU Cores: {}", system_resources.cpu_cores);
-println!("Current CPU Usage: {:.2}%", system_resources.cpu_usage);
+fn main() -> Result<(), Error> {
+    // Get detailed CPU information
+    let cpu_info = cpu::get_cpu_info()?;
+    
+    // Access CPU information
+    println!("CPU Model: {}", cpu_info.name);
+    println!("CPU Vendor: {}", cpu_info.vendor);
+    println!("CPU Cores: {} (Logical: {})", cpu_info.cores, cpu_info.logical_cores);
+    if let Some(freq) = cpu_info.frequency {
+        println!("CPU Frequency: {} MHz", freq);
+    }
+    println!("Current CPU Usage: {:.2}%", cpu_info.usage);
+    
+    Ok(())
+}
 ```
+
+This provides more comprehensive information than the previous approach using `ResourceMonitor`, including the CPU model name, vendor, and frequency.
 
 ## Running CPU Performance Benchmarks
 
@@ -75,6 +84,43 @@ fn main() -> Result<(), Error> {
 }
 ```
 
+## Floating-Point Performance
+
+CatP2P also provides a benchmark for floating-point operations, which are common in scientific computing and graphics:
+
+```rust
+use catp2p::benchmark::cpu;
+use catp2p::error::Error;
+
+fn main() -> Result<(), Error> {
+    let iterations = 10_000_000;
+    let duration = cpu::run_floating_point_benchmark(iterations)?;
+    println!("Floating-point benchmark: {:?}", duration);
+    
+    Ok(())
+}
+```
+
+## Averaged Benchmarks for Consistency
+
+To get more consistent results, you can run benchmarks multiple times and average the results:
+
+```rust
+use catp2p::benchmark::cpu;
+use catp2p::error::Error;
+
+fn main() -> Result<(), Error> {
+    // Run the single-core benchmark 3 times and average the results
+    let avg_duration = cpu::run_averaged_benchmark(3, || {
+        cpu::run_single_core_benchmark(10_000_000)
+    })?;
+    
+    println!("Averaged single-core benchmark: {:?}", avg_duration);
+    
+    Ok(())
+}
+```
+
 ## Understanding CPU Benchmark Results
 
 The CPU benchmark in CatP2P measures several aspects of CPU performance:
@@ -94,6 +140,44 @@ The overall CPU benchmark score is a composite value that represents:
   - CPU architecture and efficiency
   - Multi-threading capabilities
 
+### Understanding Multi-Core Performance
+
+When running multi-core benchmarks, you might observe that adding more cores doesn't always improve performance. In some cases, it might even decrease performance. This is due to several factors:
+
+1. **Thread Creation Overhead**: Creating and managing threads has a cost
+2. **Memory Contention**: Multiple cores accessing memory simultaneously can cause bottlenecks
+3. **Task Distribution**: The current implementation might not distribute work evenly
+4. **System Load**: Other processes running on your system can affect benchmark results
+5. **Cache Coherence**: Maintaining consistent cache state across cores can add overhead
+
+For example, on an AMD Ryzen 7 3700X with 16 logical cores, we observed the following results:
+
+```
+Multi-core benchmark (1 cores): 442 ms
+Multi-core benchmark (2 cores): 432 ms
+Multi-core benchmark (4 cores): 486 ms
+Multi-core benchmark (8 cores): 605 ms
+Multi-core benchmark (16 cores): 918 ms
+```
+
+This shows that performance actually degrades as more cores are added beyond 2 cores. The efficiency drops significantly:
+
+```
+Cores | Ideal Speedup | Actual Speedup | Efficiency
+------|---------------|----------------|----------
+    1 |          1.00 |           1.00 |   100.00%
+    2 |          2.00 |           1.02 |    51.16%
+    4 |          4.00 |           0.91 |    22.74%
+    8 |          8.00 |           0.73 |     9.13%
+   16 |         16.00 |           0.48 |     3.01%
+```
+
+This decreasing efficiency suggests that the benchmark workload is not well-suited for parallelization in its current form. This could be due to:
+
+1. High synchronization overhead with the atomic counter
+2. Memory access patterns causing cache contention
+3. The workload being too simple to benefit from parallelization
+
 ### Comparing Single-Core vs. Multi-Core Results
 
 By comparing single-core and multi-core benchmark results, you can understand:
@@ -102,6 +186,8 @@ By comparing single-core and multi-core benchmark results, you can understand:
 - How efficiently your CPU scales with multiple threads
 - The optimal number of threads for your specific CPU
 
+For CPU-bound tasks in your application, you might want to limit the number of threads to the point where you see diminishing returns in the benchmark.
+
 ## Complete CPU Benchmarking Example
 
 Here's a complete example that demonstrates all CPU benchmarking capabilities:
@@ -109,16 +195,21 @@ Here's a complete example that demonstrates all CPU benchmarking capabilities:
 ```rust
 use catp2p::benchmark::cpu;
 use catp2p::error::Error;
-use catp2p::resources::monitor::ResourceMonitor;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    // Get CPU information
-    let mut resource_monitor = ResourceMonitor::new_with_default_interval();
-    let system_resources = resource_monitor.get_current_resources();
+    println!("=== CatP2P CPU Information and Benchmarking ===\n");
     
-    println!("CPU Cores: {}", system_resources.cpu_cores);
-    println!("Current CPU Usage: {:.2}%", system_resources.cpu_usage);
+    // Get CPU information
+    let cpu_info = cpu::get_cpu_info()?;
+    
+    println!("CPU Model: {}", cpu_info.name);
+    println!("CPU Vendor: {}", cpu_info.vendor);
+    println!("CPU Cores: {} (Logical: {})", cpu_info.cores, cpu_info.logical_cores);
+    if let Some(freq) = cpu_info.frequency {
+        println!("CPU Frequency: {} MHz", freq);
+    }
+    println!("Current CPU Usage: {:.2}%", cpu_info.usage);
     
     // Run overall CPU benchmark
     let cpu_score = cpu::run_cpu_benchmark()?;
@@ -130,11 +221,11 @@ async fn main() -> Result<(), Error> {
     println!("Single-core benchmark: {:?}", duration);
     
     // Run multi-core benchmark with different thread counts
-    let max_cores = system_resources.cpu_cores as usize;
+    let max_cores = cpu_info.logical_cores;
     let iterations_per_thread = 50_000_000;
     
-    for cores in [1, 2, 4, max_cores.min(8) as usize] {
-        if cores > max_cores as usize {
+    for cores in [1, 2, 4, max_cores.min(8), max_cores] {
+        if cores > max_cores {
             continue;
         }
         
@@ -142,9 +233,28 @@ async fn main() -> Result<(), Error> {
         println!("Multi-core benchmark ({} cores): {:?}", cores, duration);
     }
     
+    // Run floating-point benchmark
+    let fp_iterations = 10_000_000;
+    let duration = cpu::run_floating_point_benchmark(fp_iterations)?;
+    println!("Floating-point benchmark: {:?}", duration);
+    
+    // Run averaged benchmarks
+    let avg_single = cpu::run_averaged_benchmark(3, || cpu::run_single_core_benchmark(10_000_000))?;
+    println!("Averaged single-core benchmark: {:?}", avg_single);
+    
     Ok(())
 }
 ```
+
+## Best Practices for CPU Benchmarking
+
+To get the most accurate results from your CPU benchmarks:
+
+1. **Run benchmarks when the system is idle**: Close other applications and background processes
+2. **Run benchmarks multiple times**: Take the average of several runs to account for variations
+3. **Be consistent with system conditions**: Power settings, CPU frequency scaling, and temperature can affect results
+4. **Interpret results in context**: Compare results only between similar hardware and configurations
+5. **Consider your specific workload**: The benchmark is a general test and might not reflect the performance of your specific application
 
 ## Using CPU Benchmark Results
 
@@ -154,164 +264,23 @@ The results from CPU benchmarking can help you:
 2. Configure optimal thread counts for parallel processing
 3. Compare your node's capabilities with other nodes in the network
 4. Set appropriate CPU resource limits in your CatP2P configuration
-```
 
-### Step 5: Create the Example File
+## Optimizing Multi-Core Performance
 
-```bash
-mkdir -p catp2p/examples
-touch catp2p/examples/cpu_benchmark.rs
-```
+If you're developing CPU-intensive applications with CatP2P, consider these strategies to improve multi-core performance:
 
-Add the example code:
+1. **Reduce synchronization points**: Minimize the use of locks, atomic operations, and shared data
+2. **Use larger work chunks**: Increase the amount of work done between synchronization points
+3. **Implement work stealing**: Allow idle threads to "steal" work from busy threads
+4. **Consider NUMA awareness**: On systems with Non-Uniform Memory Access, ensure threads work with memory close to their CPU
+5. **Use thread-local storage**: Minimize contention by giving each thread its own data structures
 
-```rust
-// examples/cpu_benchmark.rs
-use catp2p::benchmark::cpu;
-use catp2p::error::Error;
-use catp2p::resources::monitor::ResourceMonitor;
-use std::time::Duration;
+## Future Improvements
 
-#[tokio::main]
-async fn main() -> Result<(), Error> {
-    println!("=== CatP2P CPU Information and Benchmarking ===\n");
-    
-    // Part 1: Get CPU information without performance testing
-    println!("--- CPU Information ---");
-    
-    // Create a resource monitor to get CPU details
-    let mut resource_monitor = ResourceMonitor::new_with_default_interval();
-    let system_resources = resource_monitor.get_current_resources();
-    
-    println!("CPU Cores: {}", system_resources.cpu_cores);
-    println!("Current CPU Usage: {:.2}%", system_resources.cpu_usage);
-    
-    // Part 2: Run performance benchmarks
-    println!("\n--- CPU Performance Benchmark ---");
-    println!("Running CPU benchmark...");
-    
-    // Run the CPU benchmark
-    let cpu_score = cpu::run_cpu_benchmark()?;
-    println!("CPU Benchmark Score: {:.2}", cpu_score);
-    
-    // Part 3: Run single-core benchmark with different workloads
-    println!("\n--- Single Core Performance ---");
-    
-    let iterations = [1_000_000, 10_000_000, 100_000_000];
-    for &iter in &iterations {
-        let duration = cpu::run_single_core_benchmark(iter)?;
-        println!(
-            "Single-core benchmark ({} iterations): {:.2} ms", 
-            iter, 
-            duration.as_millis()
-        );
-    }
-    
-    // Part 4: Run multi-core benchmark with different thread counts
-    println!("\n--- Multi-Core Scaling ---");
-    
-    // Get available CPU cores
-    let max_cores = num_cpus::get();
-    let core_counts = [1, 2, 4, max_cores.min(8), max_cores];
-    
-    // Use a fixed workload per thread
-    let iterations_per_thread = 50_000_000;
-    
-    for &cores in &core_counts {
-        if cores > max_cores {
-            continue;
-        }
-        
-        let duration = cpu::run_multi_core_benchmark(cores, iterations_per_thread)?;
-        println!(
-            "Multi-core benchmark ({} cores): {:.2} ms", 
-            cores, 
-            duration.as_millis()
-        );
-    }
-    
-    println!("\nCPU benchmarking completed!");
-    
-    Ok(())
-}
-```
+The CatP2P team is working on improving the CPU benchmarking functionality:
 
-### Step 6: Update the Cargo.toml to Include the Example
-
-Make sure the example is properly registered in your Cargo.toml:
-
-```toml
-[[example]]
-name = "cpu_benchmark"
-path = "examples/cpu_benchmark.rs"
-```
-
-### Step 7: Update the Introduction Page
-
-Let's also update the introduction page to mention our new documentation:
-
-Edit `catp2p/docs-site/docs/intro.md` to include a reference to our new guides:
-
-```markdown
----
-sidebar_position: 1
----
-
-# Introduction to CatP2P
-
-CatP2P is a high-performance peer-to-peer library for distributed computing, written in Rust.
-
-## Features
-
-- **P2P Networking**: Built on libp2p for robust peer discovery and communication
-- **Task Distribution**: Efficiently distribute and execute tasks across the network
-- **Resource Management**: Monitor and allocate CPU, GPU, memory, and storage resources
-- **Benchmarking**: Assess node capabilities for optimal task allocation
-- **Local Storage**: Persistent storage for task logs and peer interactions
-- **Scoring System**: Track contributions and allocate rewards
-
-## Getting Started
-
-Check out our guides to learn how to use CatP2P:
-
-- [CPU Benchmarking](./guides/cpu-benchmarking.md): Learn how to benchmark CPU performance
-- More guides coming soon!
-
-## Installation
-
-Add catp2p to your Cargo.toml:
-
-```toml
-[dependencies]
-catp2p = "0.1.0"
-```
-
-## Basic Usage
-
-```rust
-use catp2p::CatP2P;
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create a new CatP2P instance with default configuration
-    let mut node = CatP2P::new()?;
-    
-    // Start the node
-    node.start()?;
-    
-    // The node is now running and will discover peers and process tasks
-    
-    // When done, stop the node
-    node.stop()?;
-    
-    Ok(())
-}
-```
-```
-
-### Step 8: Test the Documentation
-
-To test your Docusaurus site locally:
-
-```bash
-cd catp2p/docs-site
-npm start
+1. Better work distribution for multi-core benchmarks
+2. More specialized benchmarks for different types of workloads
+3. Visualization tools to help interpret benchmark results
+4. Integration with the task scheduler to optimize task allocation
+5. SIMD (Single Instruction, Multiple Data) benchmarks to test vector processing capabilities
