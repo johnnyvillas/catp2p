@@ -15,6 +15,10 @@ A high-performance peer-to-peer library for distributed computing, written in Ru
 - **Local Storage**: Persistent storage for task logs and peer interactions
 - **Scoring System**: Track contributions and allocate rewards
 
+![Global P2P Network Visualization](./assets/catnetp2p_screen.png)
+
+*Screenshot of an application built on CatP2P, visualizing a global peer-to-peer network. The world map displays node distribution and real-time connection data, demonstrating the library's capabilities for building powerful distributed systems that span continents. This visualization showcases how CatP2P enables applications to harness computing resources across geographical boundaries.*
+
 ## Documentation
 
 For detailed documentation, visit our [documentation site](https://johnnyvillas.github.io/catp2p/).
