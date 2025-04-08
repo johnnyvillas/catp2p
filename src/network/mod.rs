@@ -13,76 +13,117 @@
  * limitations under the License.
  */
 
-//! Network functionality for peer discovery and communication.
+//! Resource monitoring and allocation functionality.
 
-pub mod discovery;
-pub mod transport;
-pub mod protocol;
+pub mod monitor;
+pub mod allocation;
 
-use crate::error::Error;
-use crate::config::NetworkConfig;
-use libp2p::{
-    core::transport::Transport,
-    identity,
-    PeerId,
-    Swarm,
-};
-use std::collections::HashSet;
+// Remove unused import
+// use crate::error::Error;
+use serde::{Deserialize, Serialize};
+use sysinfo::{System, SystemExt, CpuExt, DiskExt}; // Added DiskExt
 
-/// Represents a peer in the network.
-#[derive(Debug, Clone)]
-pub struct Peer {
-    /// The peer's ID.
-    pub id: PeerId,
-    /// The peer's addresses.
-    pub addresses: Vec<String>,
-    /// Whether the peer is connected.
-    pub connected: bool,
-    /// The peer's reported capabilities.
-    pub capabilities: Vec<String>,
+/// System resource information.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SystemResources {
+    /// CPU usage as a percentage (0.0 - 100.0).
+    pub cpu_usage: f32,
+    /// Total CPU cores available.
+    pub cpu_cores: u32,
+    /// Total memory in bytes.
+    pub total_memory: u64,
+    /// Available memory in bytes.
+    pub available_memory: u64,
+    /// Total disk space in bytes.
+    pub total_disk: u64,
+    /// Available disk space in bytes.
+    pub available_disk: u64,
+    /// GPU information, if available.
+    pub gpu_info: Option<GpuInfo>,
 }
 
-/// The main network manager for CatP2P.
-pub struct NetworkManager {
-    config: NetworkConfig,
-    local_peer_id: PeerId,
-    known_peers: HashSet<PeerId>,
-    // Will add more fields as we implement the network functionality
+/// GPU information.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuInfo {
+    /// GPU name.
+    pub name: String,
+    /// GPU usage as a percentage (0.0 - 100.0).
+    pub usage: f32,
+    /// Total GPU memory in bytes.
+    pub total_memory: u64,
+    /// Available GPU memory in bytes.
+    pub available_memory: u64,
 }
 
-impl NetworkManager {
-    /// Creates a new NetworkManager with the given configuration.
-    pub fn new(config: NetworkConfig) -> Result<Self, Error> {
-        // Generate a random peer ID for now
-        let local_key = identity::Keypair::generate_ed25519();
-        let local_peer_id = PeerId::from(local_key.public());
+/// The main resource manager for CatP2P.
+pub struct ResourceManager {
+    system: System,
+    // Will add more fields as we implement the resource management functionality
+}
 
-        Ok(Self {
-            config,
-            local_peer_id,
-            known_peers: HashSet::new(),
-        })
+impl ResourceManager {
+    /// Creates a new ResourceManager.
+    pub fn new() -> Self {
+        let mut system = System::new_all();
+        system.refresh_all();
+        
+        Self {
+            system,
+        }
     }
 
-    /// Starts the network manager.
-    pub fn start(&mut self) -> Result<(), Error> {
-        // Implementation will be added later
-        Ok(())
+    /// Gets the current system resources.
+    pub fn get_system_resources(&mut self) -> SystemResources {
+        self.system.refresh_all();
+        
+        // Use global_cpu_info() instead of global_processor_info()
+        let cpu_usage = self.system.global_cpu_info().cpu_usage();
+        // Use cpus() to get the list of CPUs
+        let cpu_cores = self.system.cpus().len() as u32;
+        
+        let total_memory = self.system.total_memory();
+        let available_memory = self.system.available_memory();
+        
+        // Add explicit type annotations for sum operations
+        let total_disk: u64 = self.system.disks().iter()
+            .map(|disk| disk.total_space())
+            .sum();
+        let available_disk: u64 = self.system.disks().iter()
+            .map(|disk| disk.available_space())
+            .sum();
+        
+        // GPU info is not directly available through sysinfo
+        // We'll need to implement this using wgpu or another library
+        let gpu_info = None;
+        
+        SystemResources {
+            cpu_usage,
+            cpu_cores,
+            total_memory,
+            available_memory,
+            total_disk,
+            available_disk,
+            gpu_info,
+        }
     }
 
-    /// Stops the network manager.
-    pub fn stop(&mut self) -> Result<(), Error> {
-        // Implementation will be added later
-        Ok(())
+    /// Checks if the system has enough resources for a given task.
+    pub fn has_enough_resources(&mut self, _cpu: f32, memory: u64, disk: u64) -> bool {
+        self.system.refresh_all();
+        
+        let available_memory = self.system.available_memory();
+        // Add explicit type annotation for sum operation
+        let available_disk: u64 = self.system.disks().iter()
+            .map(|disk| disk.available_space())
+            .sum();
+        
+        // Simple check for now
+        available_memory >= memory && available_disk >= disk
     }
+}
 
-    /// Returns the local peer ID.
-    pub fn local_peer_id(&self) -> &PeerId {
-        &self.local_peer_id
-    }
-
-    /// Returns a list of known peers.
-    pub fn known_peers(&self) -> Vec<PeerId> {
-        self.known_peers.iter().cloned().collect()
+impl Default for ResourceManager {
+    fn default() -> Self {
+        Self::new()
     }
 }

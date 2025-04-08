@@ -19,7 +19,7 @@ Cargo.lock
 .DS_Store
 
 # Utility scripts
-add_license_headers.py
+/scripts/
 
 # Documentation build artifacts
 docs-site/build/

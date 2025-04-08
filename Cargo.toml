@@ -2,7 +2,7 @@
 name = "catp2p"
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Joao Guimaraes <johnnyvillasdev@gmail.com>"]
 description = "A high-performance P2P library for distributed computing"
 repository = "https://github.com/johnnyvillas/catp2p"
 license = "Apache-2.0"
@@ -12,7 +12,7 @@ categories = ["network-programming", "asynchronous"]
 
 [dependencies]
 # Networking
-libp2p = { version = "0.52", features = ["tcp", "dns", "websocket", "noise", "yamux", "kad", "identify", "ping", "mdns"] }
+libp2p = { version = "0.52", features = ["tcp", "dns", "websocket", "noise", "yamux", "kad", "identify", "ping", "mdns", "macros"] }
 futures = "0.3"
 
 # Task Management
@@ -49,10 +49,6 @@ gpu = ["wgpu"]
 storage = []
 full = ["cpu", "gpu", "storage"]
 
-[[bench]]
-name = "task_execution"
-harness = false
-
 [[example]]
 name = "simple_node"
 path = "examples/simple_node.rs"
@@ -60,3 +56,9 @@ path = "examples/simple_node.rs"
 [[example]]
 name = "benchmark_runner"
 path = "examples/benchmark_runner.rs"
+
+# Specify the path for the benchmark
+[[bench]]
+name = "task_execution"
+path = "src/examples/task_execution.rs"
+harness = false

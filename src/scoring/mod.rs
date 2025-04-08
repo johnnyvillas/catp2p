@@ -20,131 +20,204 @@ pub mod points;
 use crate::error::Error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
-/// A record of a peer's contributions.
+/// Contribution type.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PeerContribution {
-    /// The peer's ID.
-    pub peer_id: String,
-    /// The total number of tasks completed.
-    pub tasks_completed: u64,
-    /// The total number of tasks failed.
-    pub tasks_failed: u64,
-    /// The total CPU time contributed in seconds.
-    pub cpu_time_contributed: f64,
-    /// The total memory contributed in byte-seconds.
-    pub memory_contributed: u64,
-    /// The total disk space contributed in byte-seconds.
-    pub disk_contributed: u64,
-    /// The total GPU time contributed in seconds, if applicable.
-    pub gpu_time_contributed: Option<f64>,
-    /// The total score earned.
-    pub total_score: f64,
+pub enum ContributionType {
+    /// CPU contribution.
+    Cpu,
+    /// Memory contribution.
+    Memory,
+    /// Disk contribution.
+    Disk,
+    /// GPU contribution.
+    Gpu,
+    /// Network contribution.
+    Network,
 }
 
-/// The main scoring manager for CatP2P.
-pub struct ScoringManager {
-    contributions: HashMap<String, PeerContribution>,
+/// Contribution record.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Contribution {
+    /// Total CPU time contributed in seconds.
+    pub cpu_time_secs: f64,
+    /// Total memory contributed in bytes.
+    pub memory_bytes: u64,
+    /// Total disk space contributed in bytes.
+    pub disk_bytes: u64,
+    /// Total GPU time contributed in seconds.
+    pub gpu_time_secs: f64,
+    /// Total network bandwidth contributed in bytes.
+    pub network_bytes: u64,
+    /// Total points earned.
+    pub points: u64,
 }
 
-impl ScoringManager {
-    /// Creates a new ScoringManager.
-    pub fn new() -> Self {
+impl Default for Contribution {
+    fn default() -> Self {
         Self {
-            contributions: HashMap::new(),
+            cpu_time_secs: 0.0,
+            memory_bytes: 0,
+            disk_bytes: 0,
+            gpu_time_secs: 0.0,
+            network_bytes: 0,
+            points: 0,
         }
     }
+}
 
-    /// Records a completed task for a peer.
-    pub fn record_task_completion(
-        &mut self,
+/// Scoring system for tracking peer contributions.
+pub struct ScoringSystem {
+    contributions: Arc<Mutex<HashMap<String, Contribution>>>,
+    cpu_points_per_hour: u64,
+    memory_points_per_gb_hour: u64,
+    disk_points_per_gb_hour: u64,
+    gpu_points_per_hour: u64,
+    network_points_per_gb: u64,
+}
+
+impl ScoringSystem {
+    /// Creates a new ScoringSystem with default point values.
+    pub fn new() -> Self {
+        Self {
+            contributions: Arc::new(Mutex::new(HashMap::new())),
+            cpu_points_per_hour: 100,
+            memory_points_per_gb_hour: 50,
+            disk_points_per_gb_hour: 20,
+            gpu_points_per_hour: 200,
+            network_points_per_gb: 10,
+        }
+    }
+    
+    /// Creates a new ScoringSystem with custom point values.
+    pub fn new_with_custom_points(
+        cpu_points_per_hour: u64,
+        memory_points_per_gb_hour: u64,
+        disk_points_per_gb_hour: u64,
+        gpu_points_per_hour: u64,
+        network_points_per_gb: u64,
+    ) -> Self {
+        Self {
+            contributions: Arc::new(Mutex::new(HashMap::new())),
+            cpu_points_per_hour,
+            memory_points_per_gb_hour,
+            disk_points_per_gb_hour,
+            gpu_points_per_hour,
+            network_points_per_gb,
+        }
+    }
+    
+    /// Records a contribution from a peer.
+    pub fn record_contribution(
+        &self,
         peer_id: &str,
-        cpu_time: f64,
+        contribution_type: ContributionType,
+        amount: f64,
+    ) -> Result<u64, Error> {
+        let mut contributions = self.contributions.lock()
+            .map_err(|_| Error::Other("Failed to lock contributions".to_string()))?;
+        
+        let contribution = contributions.entry(peer_id.to_string()).or_default();
+        
+        let points = match contribution_type {
+            ContributionType::Cpu => {
+                contribution.cpu_time_secs += amount;
+                (amount / 3600.0 * self.cpu_points_per_hour as f64) as u64
+            },
+            ContributionType::Memory => {
+                let gb_hours = amount / (1024.0 * 1024.0 * 1024.0) * (1.0 / 3600.0);
+                contribution.memory_bytes += amount as u64;
+                (gb_hours * self.memory_points_per_gb_hour as f64) as u64
+            },
+            ContributionType::Disk => {
+                let gb_hours = amount / (1024.0 * 1024.0 * 1024.0) * (1.0 / 3600.0);
+                contribution.disk_bytes += amount as u64;
+                (gb_hours * self.disk_points_per_gb_hour as f64) as u64
+            },
+            ContributionType::Gpu => {
+                contribution.gpu_time_secs += amount;
+                (amount / 3600.0 * self.gpu_points_per_hour as f64) as u64
+            },
+            ContributionType::Network => {
+                let gb = amount / (1024.0 * 1024.0 * 1024.0);
+                contribution.network_bytes += amount as u64;
+                (gb * self.network_points_per_gb as f64) as u64
+            },
+        };
+        
+        contribution.points += points;
+        
+        Ok(points)
+    }
+    
+    /// Records a task contribution from a peer.
+    pub fn record_task_contribution(
+        &self,
+        peer_id: &str,
+        cpu_time_secs: f64,
         memory_used: u64,
         disk_used: u64,
-        gpu_time: Option<f64>,
-    ) -> Result<f64, Error> {
-        let contribution = self.contributions
-            .entry(peer_id.to_string())
-            .or_insert_with(|| PeerContribution {
-                peer_id: peer_id.to_string(),
-                tasks_completed: 0,
-                tasks_failed: 0,
-                cpu_time_contributed: 0.0,
-                memory_contributed: 0,
-                disk_contributed: 0,
-                gpu_time_contributed: None,
-                total_score: 0.0,
-            });
+        gpu_time_secs: f64,
+    ) -> Result<u64, Error> {
+        // Calculate the task score first, before acquiring the lock
+        let task_score = self.calculate_task_score(cpu_time_secs, memory_used, disk_used, gpu_time_secs);
         
-        contribution.tasks_completed += 1;
-        contribution.cpu_time_contributed += cpu_time;
-        contribution.memory_contributed += memory_used;
-        contribution.disk_contributed += disk_used;
+        // Then update the contribution
+        let mut contributions = self.contributions.lock()
+            .map_err(|_| Error::Other("Failed to lock contributions".to_string()))?;
         
-        if let Some(gpu_time_value) = gpu_time {
-            contribution.gpu_time_contributed = Some(
-                contribution.gpu_time_contributed.unwrap_or(0.0) + gpu_time_value
-            );
-        }
+        let contribution = contributions.entry(peer_id.to_string()).or_default();
         
-        // Calculate score for this task
-        let task_score = self.calculate_task_score(cpu_time, memory_used, disk_used, gpu_time);
-        contribution.total_score += task_score;
+        // Now update the contribution
+        contribution.cpu_time_secs += cpu_time_secs;
+        contribution.memory_bytes += memory_used;
+        contribution.disk_bytes += disk_used;
+        contribution.gpu_time_secs += gpu_time_secs;
+        contribution.points += task_score;
         
         Ok(task_score)
     }
-
-    /// Records a failed task for a peer.
-    pub fn record_task_failure(&mut self, peer_id: &str) -> Result<(), Error> {
-        let contribution = self.contributions
-            .entry(peer_id.to_string())
-            .or_insert_with(|| PeerContribution {
-                peer_id: peer_id.to_string(),
-                tasks_completed: 0,
-                tasks_failed: 0,
-                cpu_time_contributed: 0.0,
-                memory_contributed: 0,
-                disk_contributed: 0,
-                gpu_time_contributed: None,
-                total_score: 0.0,
-            });
-        
-        contribution.tasks_failed += 1;
-        
-        Ok(())
-    }
-
-    /// Gets a peer's contribution record.
-    pub fn get_peer_contribution(&self, peer_id: &str) -> Option<&PeerContribution> {
-        self.contributions.get(peer_id)
-    }
-
-    /// Gets all peer contribution records.
-    pub fn get_all_contributions(&self) -> Vec<&PeerContribution> {
-        self.contributions.values().collect()
-    }
-
-    /// Calculates the score for a task based on resource usage.
+    
+    /// Calculates the score for a task.
     fn calculate_task_score(
         &self,
-        cpu_time: f64,
+        cpu_time_secs: f64,
         memory_used: u64,
         disk_used: u64,
-        gpu_time: Option<f64>,
-    ) -> f64 {
-        // Simple scoring formula for now
-        // We can make this more sophisticated later
-        let cpu_score = cpu_time * 1.0;
-        let memory_score = (memory_used as f64) / (1024.0 * 1024.0 * 1024.0) * 0.5; // GB-seconds
-        let disk_score = (disk_used as f64) / (1024.0 * 1024.0 * 1024.0) * 0.3; // GB-seconds
-        let gpu_score = gpu_time.unwrap_or(0.0) * 2.0; // GPU time is weighted more heavily
+        gpu_time_secs: f64,
+    ) -> u64 {
+        let cpu_points = (cpu_time_secs / 3600.0 * self.cpu_points_per_hour as f64) as u64;
         
-        cpu_score + memory_score + disk_score + gpu_score
+        let memory_gb_hours = (memory_used as f64) / (1024.0 * 1024.0 * 1024.0) * (1.0 / 3600.0);
+        let memory_points = (memory_gb_hours * self.memory_points_per_gb_hour as f64) as u64;
+        
+        let disk_gb_hours = (disk_used as f64) / (1024.0 * 1024.0 * 1024.0) * (1.0 / 3600.0);
+        let disk_points = (disk_gb_hours * self.disk_points_per_gb_hour as f64) as u64;
+        
+        let gpu_points = (gpu_time_secs / 3600.0 * self.gpu_points_per_hour as f64) as u64;
+        
+        cpu_points + memory_points + disk_points + gpu_points
+    }
+    
+    /// Gets the contribution for a peer.
+    pub fn get_contribution(&self, peer_id: &str) -> Result<Option<Contribution>, Error> {
+        let contributions = self.contributions.lock()
+            .map_err(|_| Error::Other("Failed to lock contributions".to_string()))?;
+        
+        Ok(contributions.get(peer_id).cloned())
+    }
+    
+    /// Gets all contributions.
+    pub fn get_all_contributions(&self) -> Result<HashMap<String, Contribution>, Error> {
+        let contributions = self.contributions.lock()
+            .map_err(|_| Error::Other("Failed to lock contributions".to_string()))?;
+        
+        Ok(contributions.clone())
     }
 }
 
-impl Default for ScoringManager {
+impl Default for ScoringSystem {
     fn default() -> Self {
         Self::new()
     }

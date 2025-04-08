@@ -16,9 +16,11 @@
 //! Resource monitoring functionality.
 
 use crate::error::Error;
-use crate::resources::{SystemResources, GpuInfo};
-use sysinfo::{System, SystemExt, ProcessorExt, DiskExt};
-use std::time::{Duration, Instant};
+use crate::resources::SystemResources;
+// Remove unused import
+// use crate::resources::GpuInfo;
+use sysinfo::{System, SystemExt, CpuExt, DiskExt}; // Added DiskExt
+use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time;
 
@@ -51,16 +53,19 @@ impl ResourceMonitor {
     pub fn get_current_resources(&mut self) -> SystemResources {
         self.system.refresh_all();
         
-        let cpu_usage = self.system.global_processor_info().cpu_usage();
-        let cpu_cores = self.system.processors().len() as u32;
+        // Use global_cpu_info() instead of global_processor_info()
+        let cpu_usage = self.system.global_cpu_info().cpu_usage();
+        // Use cpus() to get the list of CPUs
+        let cpu_cores = self.system.cpus().len() as u32;
         
         let total_memory = self.system.total_memory();
         let available_memory = self.system.available_memory();
         
-        let total_disk = self.system.disks().iter()
+        // Add explicit type annotations for sum operations
+        let total_disk: u64 = self.system.disks().iter()
             .map(|disk| disk.total_space())
             .sum();
-        let available_disk = self.system.disks().iter()
+        let available_disk: u64 = self.system.disks().iter()
             .map(|disk| disk.available_space())
             .sum();
         
@@ -101,16 +106,19 @@ impl ResourceMonitor {
                 
                 system.refresh_all();
                 
-                let cpu_usage = system.global_processor_info().cpu_usage();
-                let cpu_cores = system.processors().len() as u32;
+                // Use global_cpu_info() instead of global_processor_info()
+                let cpu_usage = system.global_cpu_info().cpu_usage();
+                // Use cpus() to get the list of CPUs
+                let cpu_cores = system.cpus().len() as u32;
                 
                 let total_memory = system.total_memory();
                 let available_memory = system.available_memory();
                 
-                let total_disk = system.disks().iter()
+                // Add explicit type annotations for sum operations
+                let total_disk: u64 = system.disks().iter()
                     .map(|disk| disk.total_space())
                     .sum();
-                let available_disk = system.disks().iter()
+                let available_disk: u64 = system.disks().iter()
                     .map(|disk| disk.available_space())
                     .sum();
                 

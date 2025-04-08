@@ -16,17 +16,8 @@
 //! Peer discovery functionality.
 
 use crate::error::Error;
-use libp2p::{
-    core::transport::Transport,
-    identity,
-    kad::{Kademlia, KademliaConfig, KademliaEvent, QueryResult},
-    mdns::{Mdns, MdnsEvent},
-    swarm::SwarmEvent,
-    PeerId,
-    Swarm,
-};
+use libp2p::PeerId;
 use std::collections::HashSet;
-use std::time::Duration;
 
 /// The discovery manager for finding peers on the network.
 pub struct DiscoveryManager {

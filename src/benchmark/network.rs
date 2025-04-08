@@ -17,158 +17,213 @@
 
 use crate::error::Error;
 use std::time::{Duration, Instant};
-use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::time;
+use tokio::net::{TcpListener, TcpStream};
 
-/// Runs a network benchmark and returns a score.
-pub async fn run_network_benchmark() -> Result<f64, Error> {
-    // Run the benchmark
-    let latency_score = run_network_latency_benchmark().await?;
-    let throughput_score = run_network_throughput_benchmark().await?;
-    
-    // Calculate the overall score
-    let score = (latency_score + throughput_score) / 2.0;
-    
-    Ok(score)
+/// Network benchmark result.
+#[derive(Debug, Clone)]
+pub struct NetworkBenchmarkResult {
+    /// Download speed in bytes per second.
+    pub download_speed: f64,
+    /// Upload speed in bytes per second.
+    pub upload_speed: f64,
+    /// Latency in milliseconds.
+    pub latency: f64,
 }
 
-/// Runs a network latency benchmark.
-async fn run_network_latency_benchmark() -> Result<f64, Error> {
-    // Start a local echo server
-    let server = tokio::spawn(async {
-        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let addr = listener.local_addr().unwrap();
-        
-        // Accept a connection
-        let (mut socket, _) = listener.accept().await.unwrap();
-        
-        // Echo data back to the client
-        let mut buf = [0u8; 1024];
-        loop {
-            match socket.read(&mut buf).await {
-                Ok(0) => break, // Connection closed
-                Ok(n) => {
-                    if socket.write_all(&buf[0..n]).await.is_err() {
-                        break;
-                    }
-                }
-                Err(_) => break,
-            }
-        }
-        
-        addr
-    });
+/// Runs a network benchmark and returns a result.
+pub async fn run_network_benchmark(server_addr: &str) -> Result<NetworkBenchmarkResult, Error> {
+    // Run latency benchmark
+    let latency = run_latency_benchmark(server_addr).await?;
     
-    // Wait for the server to start
-    time::sleep(Duration::from_millis(100)).await;
+    // Run download benchmark
+    let download_speed = run_download_benchmark(server_addr).await?;
     
-    // Get the server address
-    let server_addr = server.await.map_err(|e| {
-        Error::Benchmark(format!("Server task failed: {}", e))
-    })?;
+    // Run upload benchmark
+    let upload_speed = run_upload_benchmark(server_addr).await?;
     
-    // Connect to the server
-    let mut client = TcpStream::connect(server_addr).await.map_err(|e| {
-        Error::Benchmark(format!("Failed to connect to server: {}", e))
-    })?;
-    
-    // Measure round-trip time
-    let start_time = Instant::now();
-    let num_pings = 100;
+    Ok(NetworkBenchmarkResult {
+        download_speed,
+        upload_speed,
+        latency,
+    })
+}
+
+/// Runs a latency benchmark.
+pub async fn run_latency_benchmark(server_addr: &str) -> Result<f64, Error> {
+    let num_pings = 10;
+    let mut total_latency = Duration::from_secs(0);
     
     for _ in 0..num_pings {
-        // Send a ping
-        client.write_all(b"ping").await.map_err(|e| {
-            Error::Benchmark(format!("Failed to send ping: {}", e))
-        })?;
+        let start_time = Instant::now();
         
-        // Receive a pong
-        let mut buf = [0u8; 4];
-        client.read_exact(&mut buf).await.map_err(|e| {
-            Error::Benchmark(format!("Failed to receive pong: {}", e))
-        })?;
-    }
-    
-    let elapsed = start_time.elapsed();
-    
-    // Calculate the average round-trip time
-    let avg_rtt = elapsed.as_secs_f64() / (num_pings as f64);
-    
-    // Calculate the score based on the average round-trip time
-    // Lower time is better, so we invert it
-    let score = 1.0 / avg_rtt;
-    
-    Ok(score)
-}
-
-/// Runs a network throughput benchmark.
-async fn run_network_throughput_benchmark() -> Result<f64, Error> {
-    // Start a local server
-    let server = tokio::spawn(async {
-        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let addr = listener.local_addr().unwrap();
+        // Connect to the server
+        let mut stream = TcpStream::connect(server_addr).await
+            .map_err(|e| Error::Benchmark(format!("Failed to connect to server: {}", e)))?;
         
-        // Accept a connection
-        let (mut socket, _) = listener.accept().await.unwrap();
+        // Send a ping message
+        stream.write_all(b"PING").await
+            .map_err(|e| Error::Benchmark(format!("Failed to send ping: {}", e)))?;
         
-        // Receive data from the client
-        let mut total_bytes = 0;
-        let mut buf = [0u8; 65536];
-        loop {
-            match socket.read(&mut buf).await {
-                Ok(0) => break, // Connection closed
-                Ok(n) => {
-                    total_bytes += n;
-                }
-                Err(_) => break,
-            }
+        // Read the pong response
+        let mut buffer = [0u8; 4];
+        stream.read_exact(&mut buffer).await
+            .map_err(|e| Error::Benchmark(format!("Failed to receive pong: {}", e)))?;
+        
+        if &buffer != b"PONG" {
+            return Err(Error::Benchmark("Invalid pong response".to_string()));
         }
         
-        (addr, total_bytes)
-    });
-    
-    // Wait for the server to start
-    time::sleep(Duration::from_millis(100)).await;
-    
-    // Get the server address
-    let server_result = server.await.map_err(|e| {
-        Error::Benchmark(format!("Server task failed: {}", e))
-    })?;
-    
-    let (server_addr, _) = server_result;
-    
-    // Connect to the server
-    let mut client = TcpStream::connect(server_addr).await.map_err(|e| {
-        Error::Benchmark(format!("Failed to connect to server: {}", e))
-    })?;
-    
-    // Measure throughput
-    let start_time = Instant::now();
-    let data_size = 100 * 1024 * 1024; // 100 MB
-    let chunk_size = 65536; // 64 KB
-    let data = vec![0u8; chunk_size];
-    
-    let mut total_sent = 0;
-    while total_sent < data_size {
-        let to_send = std::cmp::min(chunk_size, data_size - total_sent);
-        client.write_all(&data[0..to_send]).await.map_err(|e| {
-            Error::Benchmark(format!("Failed to send data: {}", e))
-        })?;
-        total_sent += to_send;
+        // Calculate latency
+        let latency = start_time.elapsed();
+        total_latency += latency;
     }
     
-    // Close the connection
-    drop(client);
+    // Calculate average latency in milliseconds
+    let avg_latency = total_latency.as_secs_f64() * 1000.0 / num_pings as f64;
+    
+    Ok(avg_latency)
+}
+
+/// Runs a download benchmark.
+pub async fn run_download_benchmark(server_addr: &str) -> Result<f64, Error> {
+    let download_size = 10 * 1024 * 1024; // 10 MB
+    let buffer_size = 4096;
+    let mut buffer = vec![0u8; buffer_size];
+    
+    // Connect to the server
+    let mut stream = TcpStream::connect(server_addr).await
+        .map_err(|e| Error::Benchmark(format!("Failed to connect to server: {}", e)))?;
+    
+    // Send a download request
+    stream.write_all(b"DOWNLOAD").await
+        .map_err(|e| Error::Benchmark(format!("Failed to send download request: {}", e)))?;
+    
+    // Read the response
+    let start_time = Instant::now();
+    let mut bytes_read = 0;
+    
+    while bytes_read < download_size {
+        let read = stream.read(&mut buffer).await
+            .map_err(|e| Error::Benchmark(format!("Failed to read data: {}", e)))?;
+        
+        if read == 0 {
+            break; // End of stream
+        }
+        
+        bytes_read += read;
+    }
     
     let elapsed = start_time.elapsed();
     
-    // Calculate the throughput in MB/s
-    let throughput = (data_size as f64) / elapsed.as_secs_f64() / (1024.0 * 1024.0);
+    // Calculate download speed in bytes per second
+    let speed = bytes_read as f64 / elapsed.as_secs_f64();
     
-    // Calculate the score based on the throughput
-    // Higher throughput is better
-    let score = throughput;
+    Ok(speed)
+}
+
+/// Runs an upload benchmark.
+pub async fn run_upload_benchmark(server_addr: &str) -> Result<f64, Error> {
+    let upload_size = 10 * 1024 * 1024; // 10 MB
+    let buffer_size = 4096;
+    let buffer = vec![0u8; buffer_size];
     
-    Ok(score)
+    // Connect to the server
+    let mut stream = TcpStream::connect(server_addr).await
+        .map_err(|e| Error::Benchmark(format!("Failed to connect to server: {}", e)))?;
+    
+    // Send an upload request
+    stream.write_all(b"UPLOAD").await
+        .map_err(|e| Error::Benchmark(format!("Failed to send upload request: {}", e)))?;
+    
+    // Upload data
+    let start_time = Instant::now();
+    let mut bytes_written = 0;
+    
+    while bytes_written < upload_size {
+        let to_write = std::cmp::min(buffer_size, upload_size - bytes_written);
+        stream.write_all(&buffer[0..to_write]).await
+            .map_err(|e| Error::Benchmark(format!("Failed to write data: {}", e)))?;
+        bytes_written += to_write;
+    }
+    
+    // Flush the stream
+    stream.flush().await
+        .map_err(|e| Error::Benchmark(format!("Failed to flush stream: {}", e)))?;
+    
+    let elapsed = start_time.elapsed();
+    
+    // Calculate upload speed in bytes per second
+    let speed = bytes_written as f64 / elapsed.as_secs_f64();
+    
+    Ok(speed)
+}
+
+/// Starts a benchmark server.
+pub async fn start_benchmark_server(addr: &str) -> Result<(), Error> {
+    let listener = TcpListener::bind(addr).await
+        .map_err(|e| Error::Benchmark(format!("Failed to bind to address: {}", e)))?;
+    
+    println!("Benchmark server listening on {}", addr);
+    
+    loop {
+        let (mut socket, _) = listener.accept().await
+            .map_err(|e| Error::Benchmark(format!("Failed to accept connection: {}", e)))?;
+        
+        // Handle the connection in a new task
+        tokio::spawn(async move {
+            let mut buffer = [0u8; 8];
+            
+            // Read the request
+            if let Err(e) = socket.read_exact(&mut buffer[0..4]).await {
+                eprintln!("Failed to read request: {}", e);
+                return;
+            }
+            
+            match &buffer[0..4] {
+                b"PING" => {
+                    // Respond with PONG
+                    if let Err(e) = socket.write_all(b"PONG").await {
+                        eprintln!("Failed to send pong: {}", e);
+                    }
+                },
+                b"DOWN" => {
+                    // Send download data
+                    let data = vec![0u8; 4096];
+                    let mut bytes_sent = 0;
+                    let download_size = 10 * 1024 * 1024; // 10 MB
+                    
+                    while bytes_sent < download_size {
+                        let to_send = std::cmp::min(data.len(), download_size - bytes_sent);
+                        if let Err(e) = socket.write_all(&data[0..to_send]).await {
+                            eprintln!("Failed to send download data: {}", e);
+                            break;
+                        }
+                        bytes_sent += to_send;
+                    }
+                },
+                b"UPLO" => {
+                    // Receive upload data
+                    let mut buffer = vec![0u8; 4096];
+                    let mut bytes_received = 0;
+                    
+                    loop {
+                        match socket.read(&mut buffer).await {
+                            Ok(0) => break, // End of stream
+                            Ok(n) => bytes_received += n,
+                            Err(e) => {
+                                eprintln!("Failed to receive upload data: {}", e);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    println!("Received {} bytes of upload data", bytes_received);
+                },
+                _ => {
+                    eprintln!("Unknown request");
+                }
+            }
+        });
+    }
 }

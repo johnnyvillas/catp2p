@@ -52,6 +52,10 @@ pub enum Error {
     #[error("Database error: {0}")]
     Database(String),
 
+    /// Benchmark-related errors.
+    #[error("Benchmark error: {0}")]
+    Benchmark(String),
+
     /// Feature not implemented.
     #[error("Not implemented: {0}")]
     NotImplemented(String),

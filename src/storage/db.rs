@@ -39,7 +39,7 @@ impl Database {
     pub fn put<K, V>(&self, key: K, value: V) -> Result<(), Error>
     where
         K: AsRef<[u8]>,
-        V: AsRef<[u8]>,
+        V: AsRef<[u8]> + Into<sled::IVec>,
     {
         self.db.insert(key, value)
             .map_err(|e| Error::Storage(format!("Failed to store data: {}", e)))?;
@@ -101,7 +101,7 @@ impl Tree {
     pub fn put<K, V>(&self, key: K, value: V) -> Result<(), Error>
     where
         K: AsRef<[u8]>,
-        V: AsRef<[u8]>,
+        V: AsRef<[u8]> + Into<sled::IVec>,
     {
         self.tree.insert(key, value)
             .map_err(|e| Error::Storage(format!("Failed to store data: {}", e)))?;

@@ -28,9 +28,9 @@ pub fn run_cpu_benchmark() -> Result<f64, Error> {
     let start_time = Instant::now();
     
     // Create a parallel iterator to utilize all cores
-    let result: Result<Vec<u64>, Error> = (0..num_cores).into_par_iter().map(|core_id| {
+    let result: Result<Vec<u64>, Error> = (0..num_cores).into_par_iter().map(|_core_id| {
         // Run a CPU-intensive task on each core
-        let mut sum = 0;
+        let mut sum: u64 = 0;
         for i in 0..10_000_000 {
             sum = sum.wrapping_add(i);
             // Add some complexity to prevent optimization
@@ -60,7 +60,7 @@ pub fn run_cpu_benchmark() -> Result<f64, Error> {
 pub fn run_single_core_benchmark(iterations: u64) -> Result<Duration, Error> {
     let start_time = Instant::now();
     
-    let mut sum = 0;
+    let mut sum: u64 = 0;
     for i in 0..iterations {
         sum = sum.wrapping_add(i);
         // Add some complexity to prevent optimization
@@ -92,7 +92,7 @@ pub fn run_multi_core_benchmark(threads: usize, iterations_per_thread: u64) -> R
     // Run the benchmark on the thread pool
     pool.install(|| {
         (0..threads).into_par_iter().for_each(|_| {
-            let mut sum = 0;
+            let mut sum: u64 = 0;
             for i in 0..iterations_per_thread {
                 sum = sum.wrapping_add(i);
                 // Add some complexity to prevent optimization

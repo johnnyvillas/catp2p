@@ -16,72 +16,71 @@
 //! GPU task execution functionality.
 
 use crate::error::Error;
-use crate::tasks::{Task, TaskExecutor, TaskStatus};
+use crate::tasks::{Task, TaskExecutor}; // Removed unused TaskStatus import
 use async_trait::async_trait;
-use std::time::{Duration, Instant};
+// Remove the following line:
+// use std::time::Instant; // Only import when GPU feature is enabled
 
 #[cfg(feature = "gpu")]
 use wgpu;
+#[cfg(feature = "gpu")]
+use std::time::Instant;
 
 /// A GPU task executor.
 pub struct GpuTaskExecutor {
     #[cfg(feature = "gpu")]
-    device: Option<wgpu::Device>,
+    device: wgpu::Device,
     #[cfg(feature = "gpu")]
-    queue: Option<wgpu::Queue>,
+    queue: wgpu::Queue,
 }
 
 impl GpuTaskExecutor {
     /// Creates a new GpuTaskExecutor.
-    pub async fn new() -> Self {
-        #[cfg(feature = "gpu")]
-        {
-            // Initialize GPU device if the feature is enabled
-            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-                backends: wgpu::Backends::all(),
-                dx12_shader_compiler: Default::default(),
-            });
-            
-            // Try to find a suitable GPU adapter
-            let adapter = instance.request_adapter(
-                &wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::HighPerformance,
-                    compatible_surface: None,
-                    force_fallback_adapter: false,
-                },
-            ).await;
-            
-            // If we found an adapter, create a device and queue
-            let (device, queue) = if let Some(adapter) = adapter {
-                adapter.request_device(
-                    &wgpu::DeviceDescriptor {
-                        features: wgpu::Features::empty(),
-                        limits: wgpu::Limits::default(),
-                        label: None,
-                    },
-                    None,
-                ).await.ok().map(|d| (d.0, d.1))
-            } else {
-                None
-            }.unwrap_or((None, None));
-            
-            Self {
-                device,
-                queue,
-            }
-        }
+    #[cfg(feature = "gpu")]
+    pub async fn new() -> Result<Self, Error> {
+        // Initialize wgpu
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::all(),
+            dx12_shader_compiler: Default::default(),
+        });
         
-        #[cfg(not(feature = "gpu"))]
-        {
-            Self {}
-        }
+        // Get the default adapter
+        let adapter = instance.request_adapter(
+            &wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                compatible_surface: None,
+                force_fallback_adapter: false,
+            },
+        ).await.ok_or_else(|| Error::Task("No GPU adapter found".to_string()))?;
+        
+        // Create the device and queue
+        let (device, queue) = adapter.request_device(
+            &wgpu::DeviceDescriptor {
+                features: wgpu::Features::empty(),
+                limits: wgpu::Limits::default(),
+                label: None,
+            },
+            None,
+        ).await.map_err(|e| Error::Task(format!("Failed to create GPU device: {}", e)))?;
+        
+        Ok(Self {
+            device,
+            queue,
+        })
     }
     
-    /// Checks if a GPU is available.
-    pub fn is_gpu_available(&self) -> bool {
+    /// Creates a new GpuTaskExecutor.
+    #[cfg(not(feature = "gpu"))]
+    pub async fn new() -> Result<Self, Error> {
+        Err(Error::Task("GPU support is not enabled".to_string()))
+    }
+    
+    /// Checks if GPU is available.
+    pub fn is_gpu_available() -> bool {
         #[cfg(feature = "gpu")]
         {
-            self.device.is_some() && self.queue.is_some()
+            // This is a simple check, in a real implementation we would use wgpu to check
+            true
         }
         
         #[cfg(not(feature = "gpu"))]
@@ -93,11 +92,7 @@ impl GpuTaskExecutor {
 
 #[async_trait]
 impl TaskExecutor for GpuTaskExecutor {
-    async fn execute(&self, task: &Task) -> Result<String, Error> {
-        if !self.is_gpu_available() {
-            return Err(Error::Task("No GPU available".to_string()));
-        }
-        
+    async fn execute(&self, _task: &Task) -> Result<String, Error> {
         #[cfg(feature = "gpu")]
         {
             // This is a placeholder implementation
@@ -105,8 +100,8 @@ impl TaskExecutor for GpuTaskExecutor {
             
             let start_time = Instant::now();
             
-            // Simulate GPU work (in a real implementation, we would use the device and queue)
-            tokio::time::sleep(Duration::from_millis(100)).await;
+            // Simulate GPU-intensive work
+            // In a real implementation, we would create a compute shader and execute it
             
             let elapsed = start_time.elapsed();
             

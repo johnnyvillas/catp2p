@@ -16,15 +16,9 @@
 //! Custom protocols for peer communication.
 
 use crate::error::Error;
-use libp2p::{
-    core::upgrade::{self, InboundUpgrade, OutboundUpgrade},
-    identity,
-    PeerId,
-    Swarm,
-};
+use libp2p::PeerId;
 use async_trait::async_trait;
-use std::future::Future;
-use std::pin::Pin;
+
 
 /// A simple protocol for exchanging messages between peers.
 #[derive(Debug, Clone)]

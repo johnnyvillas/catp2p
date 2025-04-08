@@ -13,11 +13,7 @@
  * limitations under the License.
  */
 
-//! # catp2p
-//! 
-//! `catp2p` is a high-performance peer-to-peer library for distributed computing.
-//! It provides functionality for peer discovery, task distribution, resource monitoring,
-//! and more.
+//! Main entry point for the CatP2P library, defining the public API and core functionality.
 
 #![warn(missing_docs)]
 
@@ -34,6 +30,7 @@ use error::Error;
 use config::Config;
 
 /// The main entry point for the catp2p library.
+#[allow(dead_code)]
 pub struct CatP2P {
     config: Config,
     // Other fields will be added as we implement the components

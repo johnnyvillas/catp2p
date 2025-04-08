@@ -16,80 +16,75 @@
 //! Benchmarking functionality for assessing system capabilities.
 
 pub mod cpu;
+pub mod disk;
 pub mod gpu;
 pub mod memory;
-pub mod disk;
+pub mod network;
 
 use crate::error::Error;
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
 
-/// The result of a benchmark.
+/// Benchmark result.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BenchmarkResult {
-    /// CPU benchmark score (higher is better).
+    /// CPU benchmark score.
     pub cpu_score: f64,
-    /// Memory benchmark score (higher is better).
+    /// Memory benchmark score.
     pub memory_score: f64,
-    /// Disk benchmark score (higher is better).
+    /// Disk benchmark score.
     pub disk_score: f64,
-    /// GPU benchmark score (higher is better), if available.
+    /// GPU benchmark score, if available.
     pub gpu_score: Option<f64>,
-    /// Overall benchmark score (higher is better).
+    /// Network benchmark score.
+    pub network_score: Option<f64>,
+    /// Overall benchmark score.
     pub overall_score: f64,
 }
 
-/// The main benchmarking manager for CatP2P.
-pub struct BenchmarkManager {
-    // Will add fields as we implement the benchmarking functionality
-}
-
-impl BenchmarkManager {
-    /// Creates a new BenchmarkManager.
-    pub fn new() -> Self {
-        Self {}
+/// Runs all benchmarks and returns a combined result.
+pub async fn run_all_benchmarks() -> Result<BenchmarkResult, Error> {
+    // Run CPU benchmark
+    let cpu_score = cpu::run_cpu_benchmark()?;
+    
+    // Run memory benchmark
+    let memory_score = memory::run_memory_benchmark()?;
+    
+    // Run disk benchmark
+    let disk_score = disk::run_disk_benchmark()?;
+    
+    // Run GPU benchmark if available
+    let gpu_score = if gpu::is_gpu_available().await {
+        match gpu::run_gpu_benchmark().await {
+            Ok(score) => Some(score),
+            Err(_) => None,
+        }
+    } else {
+        None
+    };
+    
+    // Network benchmark is optional and requires a server
+    let network_score = None;
+    
+    // Calculate overall score
+    let mut overall_score = (cpu_score + memory_score + disk_score) / 3.0;
+    
+    // Include GPU score if available
+    if let Some(gpu) = gpu_score {
+        overall_score = (overall_score * 3.0 + gpu) / 4.0;
     }
-
-    /// Runs a full system benchmark.
-    pub fn run_benchmark(&self) -> Result<BenchmarkResult, Error> {
-        // Implementation will be added later
-        // For now, return a placeholder result
-        Ok(BenchmarkResult {
-            cpu_score: 100.0,
-            memory_score: 100.0,
-            disk_score: 100.0,
-            gpu_score: Some(100.0),
-            overall_score: 100.0,
-        })
+    
+    // Include network score if available
+    if let Some(network) = network_score {
+        let divisor = if gpu_score.is_some() { 5.0 } else { 4.0 };
+        overall_score = (overall_score * (divisor - 1.0) + network) / divisor;
     }
-
-    /// Runs a CPU benchmark.
-    pub fn run_cpu_benchmark(&self) -> Result<f64, Error> {
-        // Implementation will be added later
-        Ok(100.0)
-    }
-
-    /// Runs a memory benchmark.
-    pub fn run_memory_benchmark(&self) -> Result<f64, Error> {
-        // Implementation will be added later
-        Ok(100.0)
-    }
-
-    /// Runs a disk benchmark.
-    pub fn run_disk_benchmark(&self) -> Result<f64, Error> {
-        // Implementation will be added later
-        Ok(100.0)
-    }
-
-    /// Runs a GPU benchmark, if a GPU is available.
-    pub fn run_gpu_benchmark(&self) -> Result<Option<f64>, Error> {
-        // Implementation will be added later
-        Ok(Some(100.0))
-    }
-}
-
-impl Default for BenchmarkManager {
-    fn default() -> Self {
-        Self::new()
-    }
+    
+    Ok(BenchmarkResult {
+        cpu_score,
+        memory_score,
+        disk_score,
+        gpu_score,
+        network_score,
+        overall_score,
+    })
 }

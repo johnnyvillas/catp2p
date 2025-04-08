@@ -17,17 +17,13 @@
 
 use crate::error::Error;
 use libp2p::{
-    core::transport::Transport,
-    dns::DnsConfig,
+    core::upgrade,
     identity,
-    mplex,
-    noise::{self, NoiseConfig},
-    tcp::TcpConfig,
-    websocket::WsConfig,
+    noise,
+    tcp,
     yamux,
     PeerId,
-    Swarm,
-    Transport as _,
+    Transport,
 };
 use std::time::Duration;
 
@@ -39,18 +35,14 @@ pub fn create_transport(
     Error,
 > {
     // Create a noise authentication configuration
-    let noise_keys = noise::Keypair::<noise::X25519Spec>::new()
-        .into_authentic(&keypair)
+    let noise_config = noise::Config::new(&keypair)
         .map_err(|e| Error::Network(format!("Failed to create noise keys: {}", e)))?;
 
-    let noise = NoiseConfig::xx(noise_keys).into_authenticated();
-
     // Create a TCP transport with DNS resolution
-    let transport = TcpConfig::new()
-        .nodelay(true)
-        .upgrade(libp2p::core::upgrade::Version::V1)
-        .authenticate(noise)
-        .multiplex(yamux::YamuxConfig::default())
+    let transport = tcp::Transport::new(tcp::Config::default().nodelay(true))
+        .upgrade(upgrade::Version::V1)
+        .authenticate(noise_config)
+        .multiplex(yamux::Config::default())
         .timeout(Duration::from_secs(20))
         .boxed();
 

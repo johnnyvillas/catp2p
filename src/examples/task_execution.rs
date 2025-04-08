@@ -15,32 +15,25 @@
 
 //! Benchmarks for task execution.
 
-use catp2p::tasks::{Task, TaskResources, TaskResourceType, TaskStatus};
+use catp2p::tasks::{Task, TaskResourceType, TaskStatus};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::time::Duration;
 
+/// Creates a test task for benchmarking purposes.
+#[allow(dead_code)]
 fn create_test_task() -> Task {
     Task {
         id: "test-task-1".to_string(),
-        name: "Test Task".to_string(),
+        resource_type: TaskResourceType::Cpu,
+        data: Vec::new(), // Empty data for the test task
         status: TaskStatus::Pending,
-        resources: TaskResources {
-            resource_type: TaskResourceType::CPU,
-            cpu_cores: Some(1),
-            memory_bytes: Some(1024 * 1024), // 1 MB
-            gpu_memory_bytes: None,
-        },
-        priority: 1,
         created_at: 0,
-        started_at: None,
         completed_at: None,
-        result: None,
-        error: None,
     }
 }
 
 fn cpu_intensive_task(iterations: u64) -> u64 {
-    let mut sum = 0;
+    let mut sum: u64 = 0;
     for i in 0..iterations {
         sum = sum.wrapping_add(i);
         // Add some complexity to prevent optimization

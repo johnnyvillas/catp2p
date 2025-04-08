@@ -16,10 +16,11 @@
 //! CPU task execution functionality.
 
 use crate::error::Error;
-use crate::tasks::{Task, TaskExecutor, TaskStatus};
+use crate::tasks::{Task, TaskExecutor}; 
 use async_trait::async_trait;
-use rayon::prelude::*;
-use std::time::{Duration, Instant};
+// Remove unused import
+// use rayon::prelude::*;
+use std::time::Instant;
 
 /// A CPU task executor.
 pub struct CpuTaskExecutor {
@@ -48,17 +49,18 @@ impl CpuTaskExecutor {
 
 #[async_trait]
 impl TaskExecutor for CpuTaskExecutor {
-    async fn execute(&self, task: &Task) -> Result<String, Error> {
+    async fn execute(&self, _task: &Task) -> Result<String, Error> {
         // This is a placeholder implementation
         // In a real implementation, we would parse the task data and execute the actual computation
         
         let start_time = Instant::now();
+        let cpu_cores = self.cpu_cores; // Clone the value to move into the closure
         
         // Simulate CPU-intensive work
         let result = tokio::task::spawn_blocking(move || {
             // Create a parallel iterator with the specified number of threads
             let pool = rayon::ThreadPoolBuilder::new()
-                .num_threads(self.cpu_cores)
+                .num_threads(cpu_cores)
                 .build()
                 .map_err(|e| Error::Task(format!("Failed to create thread pool: {}", e)))?;
             

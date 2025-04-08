@@ -18,9 +18,8 @@
 pub mod monitor;
 pub mod allocation;
 
-use crate::error::Error;
 use serde::{Deserialize, Serialize};
-use sysinfo::{System, SystemExt, ProcessorExt, DiskExt};
+use sysinfo::{System, SystemExt, CpuExt, DiskExt}; 
 
 /// System resource information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,16 +74,16 @@ impl ResourceManager {
     pub fn get_system_resources(&mut self) -> SystemResources {
         self.system.refresh_all();
         
-        let cpu_usage = self.system.global_processor_info().cpu_usage();
-        let cpu_cores = self.system.processors().len() as u32;
+        let cpu_usage = self.system.global_cpu_info().cpu_usage();
+        let cpu_cores = self.system.cpus().len() as u32;
         
         let total_memory = self.system.total_memory();
         let available_memory = self.system.available_memory();
         
-        let total_disk = self.system.disks().iter()
+        let total_disk: u64 = self.system.disks().iter()
             .map(|disk| disk.total_space())
             .sum();
-        let available_disk = self.system.disks().iter()
+        let available_disk: u64 = self.system.disks().iter()
             .map(|disk| disk.available_space())
             .sum();
         
@@ -104,11 +103,11 @@ impl ResourceManager {
     }
 
     /// Checks if the system has enough resources for a given task.
-    pub fn has_enough_resources(&mut self, cpu: f32, memory: u64, disk: u64) -> bool {
+    pub fn has_enough_resources(&mut self, _cpu: f32, memory: u64, disk: u64) -> bool {
         self.system.refresh_all();
         
         let available_memory = self.system.available_memory();
-        let available_disk = self.system.disks().iter()
+        let available_disk: u64 = self.system.disks().iter()
             .map(|disk| disk.available_space())
             .sum();
         
