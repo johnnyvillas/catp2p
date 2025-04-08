@@ -13,6 +13,60 @@ CatP2P offers two approaches to CPU assessment:
 1. **Information Gathering**: Extracting CPU details like model name, core count, and current usage without running performance tests
 2. **Performance Testing**: Running actual computations to measure real-world performance
 
+## API Reference
+
+### Structures
+
+#### `CpuInfo`
+
+Contains detailed information about the system's CPU.
+
+| Field | Type | Description | Example Access |
+|-------|------|-------------|----------------|
+| `name` | String | The name/model of the CPU | `cpu_info.name` |
+| `cores` | Unsigned integer | The number of physical cores | `cpu_info.cores` |
+| `logical_cores` | Unsigned integer | The number of logical processors (including hyperthreading) | `cpu_info.logical_cores` |
+| `usage` | Floating-point number | Current CPU usage as a percentage (0-100) | `cpu_info.usage` |
+| `vendor` | String | CPU vendor (e.g., "Intel", "AMD") | `cpu_info.vendor` |
+| `frequency` | Optional unsigned 64-bit integer | CPU frequency in MHz, if available | `if let Some(freq) = cpu_info.frequency { ... }` |
+
+### Functions
+
+#### Information Gathering
+
+| Function | Return Type | Description | Example Usage | Possible Errors |
+|----------|-------------|-------------|--------------|-----------------|
+| `get_cpu_info()` | `CpuInfo` structure or Error | Retrieves detailed information about the system's CPU | `let info = cpu::get_cpu_info()?;` | Failed to retrieve CPU information |
+
+#### Performance Testing
+
+| Function | Return Type | Description | Example Usage | Performance Impact |
+|----------|-------------|-------------|--------------|-------------------|
+| `run_cpu_benchmark()` | Floating-point score or Error | Runs a comprehensive CPU benchmark and returns an overall score (higher is better) | `let score = cpu::run_cpu_benchmark()?;` | High - utilizes all CPU cores |
+| `run_single_core_benchmark(iterations: u64)` | Duration or Error | Measures performance of a single CPU core with specified iterations | `let duration = cpu::run_single_core_benchmark(50_000_000)?;` | Medium - runs on a single core |
+| `run_multi_core_benchmark(threads: usize, iterations_per_thread: u64)` | Duration or Error | Measures performance with multiple threads and specified iterations per thread | `let duration = cpu::run_multi_core_benchmark(4, 50_000_000)?;` | High - utilizes specified number of cores |
+| `run_floating_point_benchmark(iterations: u64)` | Duration or Error | Measures floating-point computation performance | `let duration = cpu::run_floating_point_benchmark(10_000_000)?;` | Medium - primarily tests FPU |
+| `run_averaged_benchmark(iterations: usize, benchmark_fn: F)` | Duration or Error | Runs a benchmark multiple times and returns the average duration | `let avg = cpu::run_averaged_benchmark(3, || cpu::run_single_core_benchmark(10_000_000))?;` | Depends on the benchmark function |
+
+### Function Relationships
+
+| Function | Related Functions | Notes |
+|----------|-------------------|-------|
+| `run_cpu_benchmark()` | `run_single_core_benchmark()`, `run_multi_core_benchmark()` | Provides an overall CPU score based on performance across all cores |
+| `run_averaged_benchmark()` | Any benchmark function | Takes a closure that returns a benchmark result and runs it multiple times |
+| `get_cpu_info()` | `memory::get_memory_info()` | Often used together to get a complete system overview |
+
+### Parameter Details
+
+| Function | Parameter | Description | Recommended Values |
+|----------|-----------|-------------|-------------------|
+| `run_single_core_benchmark()` | `iterations` | Number of computational iterations to perform | 10,000,000 to 100,000,000 |
+| `run_multi_core_benchmark()` | `threads` | Number of threads to use | 1 to number of logical cores |
+| `run_multi_core_benchmark()` | `iterations_per_thread` | Iterations per thread | 10,000,000 to 100,000,000 |
+| `run_floating_point_benchmark()` | `iterations` | Number of floating-point operations to perform | 1,000,000 to 50,000,000 |
+| `run_averaged_benchmark()` | `iterations` | Number of times to run the benchmark | 3 to 10 |
+
+
 ## Getting CPU Information
 
 You can retrieve detailed CPU information using the `get_cpu_info` function:

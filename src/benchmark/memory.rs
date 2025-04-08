@@ -16,7 +16,51 @@
 //! Memory benchmarking functionality.
 
 use crate::error::Error;
-use std::time::Instant; // Removed unused Duration import
+use std::time::Instant;
+use sysinfo::{System, SystemExt};
+use serde::{Deserialize, Serialize};
+
+/// Memory information structure.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryInfo {
+    /// Total physical memory in bytes.
+    pub total_memory: u64,
+    /// Available memory in bytes.
+    pub available_memory: u64,
+    /// Used memory in bytes.
+    pub used_memory: u64,
+    /// Memory usage as a percentage (0.0 - 100.0).
+    pub usage_percent: f64,
+    /// Memory per CPU core in bytes.
+    pub memory_per_core: u64,
+}
+
+/// Gets detailed information about the system's memory.
+pub fn get_memory_info() -> Result<MemoryInfo, Error> {
+    let mut system = System::new_all();
+    system.refresh_all();
+    
+    let total_memory = system.total_memory();
+    let available_memory = system.available_memory();
+    let used_memory = total_memory - available_memory;
+    let usage_percent = (used_memory as f64 / total_memory as f64) * 100.0;
+    
+    // Get CPU core count for memory-per-core calculation
+    let cpu_cores = system.cpus().len() as u64;
+    let memory_per_core = if cpu_cores > 0 {
+        total_memory / cpu_cores
+    } else {
+        0
+    };
+    
+    Ok(MemoryInfo {
+        total_memory,
+        available_memory,
+        used_memory,
+        usage_percent,
+        memory_per_core,
+    })
+}
 
 /// Runs a memory benchmark and returns a score.
 pub fn run_memory_benchmark() -> Result<f64, Error> {
@@ -43,7 +87,7 @@ pub fn run_memory_benchmark() -> Result<f64, Error> {
 }
 
 /// Runs a memory allocation benchmark.
-fn run_allocation_benchmark() -> Result<f64, Error> {
+pub fn run_allocation_benchmark() -> Result<f64, Error> {
     let start_time = Instant::now();
     
     // Allocate and deallocate memory in different sizes
@@ -77,7 +121,7 @@ fn run_allocation_benchmark() -> Result<f64, Error> {
 }
 
 /// Runs a memory read/write benchmark.
-fn run_read_write_benchmark() -> Result<f64, Error> {
+pub fn run_read_write_benchmark() -> Result<f64, Error> {
     let start_time = Instant::now();
     
     // Allocate a large buffer
@@ -109,7 +153,7 @@ fn run_read_write_benchmark() -> Result<f64, Error> {
 }
 
 /// Runs a memory random access benchmark.
-fn run_random_access_benchmark() -> Result<f64, Error> {
+pub fn run_random_access_benchmark() -> Result<f64, Error> {
     let start_time = Instant::now();
     
     // Allocate a large buffer

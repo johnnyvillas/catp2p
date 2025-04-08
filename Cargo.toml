@@ -55,15 +55,5 @@ name = "cpu_benchmark"
 path = "examples/cpu_benchmark.rs"
 
 [[example]]
-name = "simple_node"
-path = "examples/simple_node.rs"
-
-[[example]]
-name = "benchmark_runner"
-path = "examples/benchmark_runner.rs"
-
-# Specify the path for the benchmark
-[[bench]]
-name = "task_execution"
-path = "src/examples/task_execution.rs"
-harness = false
+name = "memory_benchmark"
+path = "examples/memory_benchmark.rs"

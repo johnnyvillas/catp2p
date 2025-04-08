@@ -10,6 +10,9 @@ catp2p/
 ├── README.md # Project overview
 ├── docs-site/ # Project documentation at https://johnnyvillas.github.io/catp2p/
 │   └── README.md # Project overview
+├── examples/
+│   ├── cpu_benchmark.rs # No description available
+│   └── memory_benchmark.rs # No description available
 └── src/
     ├── benchmark/
     │   ├── cpu.rs # CPU benchmarking functionality.
@@ -20,10 +23,6 @@ catp2p/
     │   └── network.rs # Network benchmarking functionality.
     ├── config.rs # Configuration for the CatP2P library.
     ├── error.rs # Error types for the CatP2P library.
-    ├── examples/
-    │   ├── benchmark_runner.rs # An example that runs the CatP2P benchmarks.
-    │   ├── simple_node.rs # A simple example of a CatP2P node.
-    │   └── task_execution.rs # Benchmarks for task execution.
     ├── lib.rs # Main entry point for the CatP2P library, defining the public API and core functionality.
     ├── network/
     │   ├── allocation.rs # Network resource allocation functionality.
