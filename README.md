@@ -11,6 +11,10 @@ A high-performance peer-to-peer library for distributed computing, written in Ru
 - **Local Storage**: Persistent storage for task logs and peer interactions
 - **Scoring System**: Track contributions and allocate rewards
 
+## Documentation
+
+For detailed documentation, visit our [documentation site](https://johnnyvillas.github.io/catp2p/).
+
 ## Getting Started
 
 ### Installation
@@ -65,27 +69,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## Documentation
-
-For more detailed documentation, see the [API docs](https://docs.rs/catp2p) or the guides in the `docs/` directory.
-
-## License
-
-This project is licensed under the Apache License 2.0. See the [LICENSE](./LICENSE) file for details.
-```
-
-### 6. Documentation UI Consideration
-
-Regarding your question about including a UI for documentation, I recommend:
-
-1. **Separate Documentation Website**: Create a dedicated documentation website using tools like [mdBook](https://rust-lang.github.io/mdBook/) or [Docusaurus](https://docusaurus.io/).
-
-2. **Interactive Examples**: Include interactive examples that demonstrate the library's capabilities.
-
-3. **API Documentation**: Use Rust's built-in documentation system with `cargo doc` to generate comprehensive API docs.
-
-4. **Integration with catnetp2p**: Your catnetp2p application could include a documentation viewer that displays the library documentation.
-
 ## Next Steps
 
 1. **Create the repository structure**:
@@ -108,12 +91,6 @@ Regarding your question about including a UI for documentation, I recommend:
    echo "Cargo.lock" >> .gitignore
    ```
 
-5. **Make your first commit**:
-   ```bash
-   git add .
-   git commit -m "Initial commit for catp2p library"
-   ```
+## License
 
-6. **Create a new repository on GitHub** and push your code:
-   ```bash
-   git remote add origin https://github.com/johnnyvillas/catp2p.git
+This project is licensed under the Apache License 2.0. See the [LICENSE](./LICENSE) file for details.
