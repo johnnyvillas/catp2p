@@ -1,0 +1,62 @@
+[package]
+name = "catp2p"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A high-performance P2P library for distributed computing"
+repository = "https://github.com/johnnyvillas/catp2p"
+license = "Apache-2.0"
+readme = "README.md"
+keywords = ["p2p", "distributed", "networking", "computing"]
+categories = ["network-programming", "asynchronous"]
+
+[dependencies]
+# Networking
+libp2p = { version = "0.52", features = ["tcp", "dns", "websocket", "noise", "yamux", "kad", "identify", "ping", "mdns"] }
+futures = "0.3"
+
+# Task Management
+rayon = "1.7"
+wgpu = { version = "0.17", optional = true }
+
+# Resource Monitoring
+sysinfo = "0.29"
+tokio = { version = "1.28", features = ["full"] }
+
+# Storage
+sled = "0.34"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Utilities
+thiserror = "1.0"
+log = "0.4"
+env_logger = "0.10"
+rand = "0.8"
+async-trait = "0.1"
+
+[dev-dependencies]
+criterion = "0.5"
+tokio-test = "0.4"
+tempfile = "3.8"
+
+[features]
+default = ["cpu", "storage"]
+cpu = []
+gpu = ["wgpu"]
+storage = []
+full = ["cpu", "gpu", "storage"]
+
+[[bench]]
+name = "task_execution"
+harness = false
+
+[[example]]
+name = "simple_node"
+path = "examples/simple_node.rs"
+
+[[example]]
+name = "benchmark_runner"
+path = "examples/benchmark_runner.rs"
