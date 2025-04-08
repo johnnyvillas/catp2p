@@ -1,0 +1,9 @@
+{
+    "label": "Guides",
+    "position": 4,
+    "link": {
+      "type": "generated-index",
+      "description": "Detailed guides for using CatP2P features"
+    }
+  }
+  
