@@ -57,3 +57,7 @@ path = "examples/cpu_benchmark.rs"
 [[example]]
 name = "memory_benchmark"
 path = "examples/memory_benchmark.rs"
+
+[[example]]
+name = "drive_benchmark"
+path = "examples/drive_benchmark.rs"
