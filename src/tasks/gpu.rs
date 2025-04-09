@@ -27,6 +27,7 @@ use wgpu;
 use std::time::Instant;
 
 /// A GPU task executor.
+#[allow(dead_code)]
 pub struct GpuTaskExecutor {
     #[cfg(feature = "gpu")]
     device: wgpu::Device,

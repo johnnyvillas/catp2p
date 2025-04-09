@@ -17,7 +17,10 @@ futures = "0.3"
 
 # Task Management
 rayon = "1.7"
-wgpu = { version = "0.17", optional = true }
+wgpu = { version = "0.17", optional = false } # Changed from optional to required for GPU benchmarking
+winit = "0.28" # Added for GPU window management
+pollster = "0.3" # Added for async/sync bridging in GPU benchmarking
+bytemuck = { version = "1.13", features = ["derive"] } # Added for GPU data conversion
 
 # Resource Monitoring
 sysinfo = "0.29"
@@ -44,9 +47,9 @@ tokio-test = "0.4"
 tempfile = "3.8"
 
 [features]
-default = ["cpu", "storage"]
+default = ["cpu", "storage", "gpu"] # Added GPU to default features
 cpu = []
-gpu = ["wgpu"]
+gpu = []
 storage = []
 full = ["cpu", "gpu", "storage"]
 
@@ -61,3 +64,7 @@ path = "examples/memory_benchmark.rs"
 [[example]]
 name = "drive_benchmark"
 path = "examples/drive_benchmark.rs"
+
+[[example]]
+name = "gpu_benchmark"
+path = "examples/gpu_benchmark.rs"

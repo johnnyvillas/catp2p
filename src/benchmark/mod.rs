@@ -15,8 +15,9 @@
 
 //! Benchmarking functionality for assessing system capabilities.
 
+// Import and re-export modules
 pub mod cpu;
-pub mod drives; // Changed from disk to drives
+pub mod drives;
 pub mod gpu;
 pub mod memory;
 pub mod network;
@@ -53,8 +54,8 @@ pub async fn run_all_benchmarks() -> Result<BenchmarkResult, Error> {
     let disk_score = drives::run_drive_benchmark()?;
     
     // Run GPU benchmark if available
-    let gpu_score = if gpu::is_gpu_available().await {
-        match gpu::run_gpu_benchmark().await {
+    let gpu_score = if gpu::is_gpu_available() {  // Removed .await here
+        match gpu::run_gpu_benchmark() {  // Removed .await here
             Ok(score) => Some(score),
             Err(_) => None,
         }

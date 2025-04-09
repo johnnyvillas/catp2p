@@ -13,12 +13,14 @@ catp2p/
 ├── examples/
 │   ├── cpu_benchmark.rs # No description available
 │   ├── drive_benchmark.rs # Example demonstrating drive benchmarking functionality.
+│   ├── gpu_benchmark.rs # Example demonstrating GPU benchmarking functionality.
 │   └── memory_benchmark.rs # No description available
 └── src/
     ├── benchmark/
     │   ├── cpu.rs # CPU benchmarking functionality.
     │   ├── drives.rs # Drive benchmarking functionality for assessing storage performance.
-    │   ├── gpu.rs # GPU benchmarking functionality.
+    │   ├── gpu/
+    │   │   └── mod.rs # GPU benchmark test implementations.
     │   ├── memory.rs # Memory benchmarking functionality.
     │   ├── mod.rs # Benchmarking functionality for assessing system capabilities.
     │   └── network.rs # Network benchmarking functionality.
