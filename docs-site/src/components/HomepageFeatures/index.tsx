@@ -2,55 +2,70 @@ import type {ReactNode} from 'react';
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
+// Import icons from react-icons
+import { 
+  FaMicrochip, 
+  FaNetworkWired, 
+  FaTasks, 
+  FaDatabase, 
+  FaChartBar, 
+  FaShieldAlt,
+  FaGlobe,
+  FaMemory,
+  FaHdd
+} from 'react-icons/fa';
 
-type FeatureItem = {
+// Main features highlighted at the top
+type MainFeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<'svg'>>;
+  Icon: React.ComponentType<React.ComponentProps<'svg'>>;
   description: ReactNode;
 };
 
-const FeatureList: FeatureItem[] = [
+const MainFeatureList: MainFeatureItem[] = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: 'High-Performance Computing',
+    Icon: FaMicrochip,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Leverage the full power of modern hardware with comprehensive 
+        benchmarking and optimization for CPU, GPU, memory, and storage.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: 'P2P Networking',
+    Icon: FaNetworkWired,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Connect devices globally with robust peer discovery and secure 
+        communication built on modern libp2p technology.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: 'Distributed Task Management',
+    Icon: FaTasks,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Efficiently distribute computational workloads with intelligent 
+        resource allocation and dynamic load balancing.
       </>
     ),
   },
 ];
 
-function Feature({title, Svg, description}: FeatureItem) {
+function MainFeature({title, Icon, description}: MainFeatureItem) {
   return (
-    <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <Heading as="h3">{title}</Heading>
-        <p>{description}</p>
+    <div className="col col--4">
+      <div className={styles.mainFeatureCard}>
+        <div className={styles.mainFeatureIconWrapper}>
+          <Icon className={styles.mainFeatureIcon} />
+        </div>
+        <div className={styles.mainFeatureContent}>
+          <Heading as="h3">{title}</Heading>
+          <p>{description}</p>
+        </div>
       </div>
     </div>
   );
@@ -58,14 +73,144 @@ function Feature({title, Svg, description}: FeatureItem) {
 
 export default function HomepageFeatures(): ReactNode {
   return (
-    <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
-          ))}
+    <>
+      {/* Main Features Section */}
+      <section className={styles.mainFeatures}>
+        <div className="container">
+          <div className={styles.mainFeatureHeader}>
+            <Heading as="h2">Core Capabilities</Heading>
+            <p>The foundation of CatP2P's distributed computing platform</p>
+          </div>
+          <div className="row">
+            {MainFeatureList.map((props, idx) => (
+              <MainFeature key={idx} {...props} />
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Secondary Features Section */}
+      <section className={styles.features}>
+        <div className="container">
+          <div className={styles.featureHeader}>
+            <Heading as="h2">Additional Features</Heading>
+            <p>A comprehensive suite of tools for building high-performance distributed applications</p>
+          </div>
+          
+          <div className={styles.featureGrid}>
+            {/* Row 1 */}
+            <div className={styles.featureItem}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaMemory className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Resource Management</Heading>
+                  <p>Monitor and allocate resources dynamically based on workload requirements.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className={clsx(styles.featureItem, styles.featureHighlight)}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaChartBar className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Comprehensive Benchmarking</Heading>
+                  <p>Assess node capabilities with detailed performance benchmarks.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.featureItem}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaHdd className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Persistent Storage</Heading>
+                  <p>Local storage with efficient serialization and database integration.</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Row 2 */}
+            <div className={clsx(styles.featureItem, styles.featureHighlight)}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaGlobe className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Global Network</Heading>
+                  <p>Connect devices globally to unlock untapped computational potential.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.featureItem}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaDatabase className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Scoring System</Heading>
+                  <p>Track contributions with a fair and transparent reward system.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className={clsx(styles.featureItem, styles.featureHighlight)}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaShieldAlt className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Secure Communications</Heading>
+                  <p>Built with security in mind, featuring encrypted communications.</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Row 3 - Add 3 more features to complete the 3x3 grid */}
+            <div className={styles.featureItem}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaMicrochip className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">GPU Acceleration</Heading>
+                  <p>Utilize GPU computing power for parallel processing tasks.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className={clsx(styles.featureItem, styles.featureHighlight)}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaNetworkWired className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Network Optimization</Heading>
+                  <p>Intelligent routing and bandwidth management for efficient data transfer.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.featureItem}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIconWrapper}>
+                  <FaTasks className={styles.featureIcon} />
+                </div>
+                <div className={styles.featureContent}>
+                  <Heading as="h3">Fault Tolerance</Heading>
+                  <p>Robust error handling and recovery mechanisms for reliable operation.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

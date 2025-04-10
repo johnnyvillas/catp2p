@@ -1,28 +1,47 @@
-import type {ReactNode} from 'react';
-import clsx from 'clsx';
-import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Layout from '@theme/Layout';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
-import Heading from '@theme/Heading';
+import type { ReactNode } from "react";
+import clsx from "clsx";
+import Link from "@docusaurus/Link";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import Layout from "@theme/Layout";
+import HomepageFeatures from "@site/src/components/HomepageFeatures";
+import Heading from "@theme/Heading";
 
-import styles from './index.module.css';
+import styles from "./index.module.css";
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
-        <Heading as="h1" className="hero__title">
-          {siteConfig.title}
-        </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
-          </Link>
+    <header className={styles.heroBanner}>
+      <div className={styles.worldMapBackground}></div>
+      <div className={clsx("container", styles.heroContainer)}>
+        <div className={styles.heroContent}>
+          <div className={styles.heroLogoSection}>
+            <img
+              src="img/catp2p_logo.svg"
+              alt="CatP2P Logo"
+              className={styles.heroLogo}
+            />
+          </div>
+          <div className={styles.heroTextSection}>
+            <Heading as="h1" className={styles.heroTitle}>
+              <span className={styles.heroTitleMain}>CatP2P</span>
+            </Heading>
+            <p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
+            <div className={styles.heroButtons}>
+              <Link
+                className={clsx("button button--primary button--lg", styles.heroButton)}
+                to="/docs/intro"
+              >
+                Get Started
+              </Link>
+              <Link
+                className={clsx("button button--outline button--lg", styles.heroButton)}
+                to="https://github.com/johnnyvillas/catp2p"
+              >
+                View on GitHub
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -30,11 +49,12 @@ function HomepageHeader() {
 }
 
 export default function Home(): ReactNode {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`${siteConfig.title} - High-Performance P2P Library`}
+      description="A high-performance P2P library for distributed computing"
+    >
       <HomepageHeader />
       <main>
         <HomepageFeatures />
