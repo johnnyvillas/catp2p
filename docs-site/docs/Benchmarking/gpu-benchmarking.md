@@ -377,3 +377,8 @@ fn main() -> Result<(), catp2p::error::Error> {
 ## API Reference
 
 For detailed API information, see the [GPU Benchmarking API Reference](/catp2p/docs/api/benchmark/gpu).
+
+## Examples
+
+For practical examples of GPU benchmarking, see the [GPU Benchmark Examples](/catp2p/docs/Examples/gpu-benchmark-example) page.
+```

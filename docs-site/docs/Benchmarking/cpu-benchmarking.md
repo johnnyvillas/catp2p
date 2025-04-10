@@ -264,4 +264,9 @@ If you're developing CPU-intensive applications with CatP2P, consider these stra
 ## API Reference
 
 For detailed API information, see the [CPU Benchmarking API Reference](/catp2p/docs/api/benchmark/cpu).
+
+## Examples
+
+For practical examples of CPU benchmarking, see the [CPU Benchmark Examples](/catp2p/docs/Examples/cpu-benchmark-example) page.
 ```
+
