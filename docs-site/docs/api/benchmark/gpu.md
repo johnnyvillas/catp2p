@@ -85,6 +85,7 @@ Information about a GPU.
 |----------|-------------|-------------|--------------|-----------------|
 | `GpuBenchmarkContext::new()` | Result&lt;GpuBenchmarkContext, Error&gt; | Creates a new GPU benchmark context | `let context = GpuBenchmarkContext::new()?;` | No compatible GPU found, device creation failed |
 | `context.run_matrix_mult(duration, matrix_size)` | Result&lt;GpuTestResult, Error&gt; | Runs a matrix multiplication benchmark | `let result = context.run_matrix_mult(Duration::from_secs(5), 1024)?;` | Device lost, out of memory |
+| `context.run_activation_functions(duration, data_size)` | Result&lt;GpuTestResult, Error&gt; | Runs a neural network activation functions benchmark | `let result = context.run_activation_functions(Duration::from_secs(2), 1_000_000)?;` | Device lost, out of memory |
 
 ### Information Gathering
 
@@ -100,13 +101,30 @@ Information about a GPU.
 | `run_gpu_benchmark()` | Result&lt;f64, Error&gt; | Runs a benchmark with default settings | `let score = gpu::run_gpu_benchmark()?;` | High - runs matrix multiplication test with default duration |
 | `run_gpu_benchmark_with_config(config)` | Result&lt;GpuBenchmarkResult, Error&gt; | Runs a benchmark with custom configuration | `let result = gpu::run_gpu_benchmark_with_config(&config)?;` | Varies based on configuration |
 | `run_matrix_mult_benchmark(adapter, duration, size)` | Result&lt;GpuTestResult, Error&gt; | Runs only the matrix multiplication test | `let result = gpu::run_matrix_mult_benchmark(&adapter, duration, 1024)?;` | Medium - runs only matrix multiplication test |
+| `run_activation_functions_benchmark(adapter, duration, data_size)` | Result&lt;GpuTestResult, Error&gt; | Runs only the activation functions test | `let result = gpu::run_activation_functions_benchmark(&adapter, duration, 1_000_000)?;` | Medium - runs only activation functions test |
 
 ## Understanding GPU Benchmark Results
 
-The GPU benchmark in CatP2P measures matrix multiplication performance, which is a common workload for general-purpose GPU computing:
+The GPU benchmark in CatP2P includes two main tests:
 
 1. **Matrix Multiplication**: How efficiently the GPU can multiply large matrices
-2. **Score in MFLOPS**: Millions of floating-point operations per second
+2. **Neural Network Activation Functions**: How efficiently the GPU can compute common activation functions used in neural networks
+
+### Matrix Multiplication Benchmark
+
+This benchmark measures the GPU's ability to perform matrix multiplication operations, which are fundamental to many GPU computing tasks:
+
+- **Score in MFLOPS**: Millions of floating-point operations per second
+- **Higher scores indicate better GPU compute performance**
+- **Matrix size**: Calculated as 512 + (complexity * 128), where complexity ranges from 1 to 10
+
+### Activation Functions Benchmark
+
+This benchmark measures the GPU's ability to compute common neural network activation functions:
+
+- **Operations tested**: ReLU, Sigmoid, Tanh, and Leaky ReLU
+- **Score**: Based on millions of operations per second
+- **Higher scores indicate better performance for AI and deep learning applications**
 
 ### Interpreting the Score
 
@@ -137,6 +155,7 @@ Note: Actual performance can vary significantly based on specific hardware, syst
 | Factor | Impact | Notes |
 |--------|--------|-------|
 | Matrix Size | High | Larger matrices provide more accurate results but may hit memory limits |
+| Data Size | Medium | Larger data sizes for activation functions provide more accurate results |
 | System Activity | Medium | Other processes using the GPU can reduce benchmark scores |
 | Driver Version | Medium | Updated drivers can provide performance improvements |
 | Thermal Throttling | High | GPUs may slow down if they overheat during benchmarking |
@@ -156,6 +175,16 @@ The matrix multiplication benchmark measures how quickly the GPU can multiply tw
 5. Performance is measured in MFLOPS (Millions of Floating Point Operations Per Second)
 
 The matrix size is calculated as: 512 + (complexity * 128), where complexity ranges from 1 to 10.
+
+### Activation Functions Benchmark
+
+The activation functions benchmark measures how quickly the GPU can compute common neural network activation functions:
+
+1. Random input data of the specified size is created
+2. The data is uploaded to GPU memory
+3. A compute shader applies four activation functions (ReLU, Sigmoid, Tanh, Leaky ReLU) to each element
+4. The process is repeated for the specified duration
+5. Performance is measured in millions of operations per second
 
 ### Resource Management
 
@@ -183,3 +212,5 @@ The GPU benchmarking functions use Rust's `Result` type to handle errors gracefu
 - `Error::Benchmark("No suitable GPU adapter found")`: System lacks required GPU capabilities
 - `Error::Benchmark("Failed to create device: {error}")`: GPU initialization failed
 - `Error::Benchmark("No matrix multiplications were performed during the benchmark")`: Benchmark failed to run any iterations
+- `Error::Benchmark("No activation function operations were performed during the benchmark")`: Benchmark failed to run any iterations
+```

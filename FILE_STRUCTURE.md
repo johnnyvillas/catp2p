@@ -20,6 +20,9 @@ catp2p/
     │   ├── cpu.rs # CPU benchmarking functionality.
     │   ├── drives.rs # Drive benchmarking functionality for assessing storage performance.
     │   ├── gpu/
+    │   │   ├── activation_functions.rs # Activation functions benchmark for GPU performance testing.
+    │   │   ├── info.rs # GPU information utilities.
+    │   │   ├── matrix_multiplications.rs # Matrix multiplication benchmark for GPU performance testing.
     │   │   └── mod.rs # GPU benchmark test implementations.
     │   ├── memory.rs # Memory benchmarking functionality.
     │   ├── mod.rs # Benchmarking functionality for assessing system capabilities.

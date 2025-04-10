@@ -21,11 +21,13 @@ use wgpu::{Adapter, Device, Queue};
 
 // Import individual benchmark modules
 mod info;
-mod matrix_mult;
+mod matrix_multiplications;
+mod activation_functions;
 
 // Re-export structures and functions
 pub use info::{GpuInfo, get_gpu_info, is_gpu_available};
-pub use matrix_mult::run_matrix_mult_benchmark;
+pub use matrix_multiplications::run_matrix_mult_benchmark;
+pub use activation_functions::run_activation_functions_benchmark;
 
 /// Result of a GPU test.
 #[derive(Debug, Clone)]
@@ -98,12 +100,23 @@ impl GpuBenchmarkContext {
     
     /// Runs a matrix multiplication benchmark.
     pub fn run_matrix_mult(&self, test_duration: Duration, matrix_size: u32) -> Result<GpuTestResult, Error> {
-        matrix_mult::run_matrix_mult_benchmark_with_context(
+        matrix_multiplications::run_matrix_mult_benchmark_with_context(
             &self.adapter,
             &self.device,
             &self.queue,
             test_duration,
             matrix_size,
+        )
+    }
+    
+    /// Runs an activation functions benchmark.
+    pub fn run_activation_functions(&self, test_duration: Duration, data_size: u32) -> Result<GpuTestResult, Error> {
+        activation_functions::run_activation_functions_benchmark_with_context(
+            &self.adapter,
+            &self.device,
+            &self.queue,
+            test_duration,
+            data_size,
         )
     }
 }
@@ -156,23 +169,58 @@ pub fn run_gpu_benchmark_with_config(
     let matrix_size = 512 + (config.complexity * 128);
     
     // Run matrix multiplication benchmark
-    let test_result = context.run_matrix_mult(
+    let matrix_result = context.run_matrix_mult(
         Duration::from_secs(config.test_duration_secs),
         matrix_size,
     )?;
+    
+    // Initialize scores
+    let mut compute_score = matrix_result.score;
+    let texture_score = 0.0;
+    let geometry_score = 0.0;
+    let memory_score = 0.0;
+    let mut test_results = vec![matrix_result.clone()];
+    let mut test_count = 1;
+    
+    // Run activation function benchmark if compute test is included
+    if config.include_compute_test {
+        // Calculate data size based on complexity
+        let data_size = 100_000 * config.complexity;
+        
+        // Run activation functions benchmark
+        match context.run_activation_functions(
+            Duration::from_secs(config.test_duration_secs),
+            data_size,
+        ) {
+            Ok(activation_result) => {
+                compute_score = (compute_score + activation_result.score) / 2.0;
+                test_results.push(activation_result);
+                test_count += 1;
+            },
+            Err(e) => {
+                eprintln!("Warning: Activation functions benchmark failed: {}", e);
+            }
+        }
+    }
+    
+    // Calculate overall score
+    let overall_score = compute_score;
+    
+    // Calculate average FPS
+    let average_fps = test_results.iter().map(|r| r.average_fps).sum::<f64>() / test_count as f64;
     
     // Create benchmark result
     let result = GpuBenchmarkResult {
         gpu_model: context.gpu_info.name,
         gpu_vendor: context.gpu_info.vendor,
         vram_estimate: context.gpu_info.vram,
-        compute_score: test_result.score,
-        texture_score: 0.0, // Not measured in this benchmark
-        geometry_score: 0.0, // Not measured in this benchmark
-        memory_score: 0.0, // Not measured in this benchmark
-        overall_score: test_result.score,
-        average_fps: test_result.average_fps,
-        test_results: vec![test_result],
+        compute_score,
+        texture_score,
+        geometry_score,
+        memory_score,
+        overall_score,
+        average_fps,
+        test_results,
     };
     
     Ok(result)

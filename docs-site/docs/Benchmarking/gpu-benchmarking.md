@@ -11,6 +11,7 @@ CatP2P provides GPU benchmarking functionality to assess the compute capabilitie
 The GPU benchmarking module allows you to:
 
 - Benchmark GPU compute performance using matrix multiplication
+- Test neural network activation function performance
 - Get detailed information about the GPU
 - Compare performance across different graphics cards
 - Customize benchmark parameters
@@ -81,6 +82,15 @@ fn main() -> Result<(), catp2p::error::Error> {
         println!("  Average FPS: {:.2}", result.average_fps);
     }
     
+    // Run activation functions benchmark
+    let data_size = 1_000_000; // 1 million elements
+    println!("Running activation functions benchmark with {} elements...", data_size);
+    
+    let result = context.run_activation_functions(Duration::from_secs(2), data_size)?;
+    
+    println!("  Score: {:.2}", result.score);
+    println!("  Average FPS: {:.2}", result.average_fps);
+    
     Ok(())
 }
 ```
@@ -121,6 +131,7 @@ A common use case is to analyze how GPU performance scales with workload size:
 ```rust
 use catp2p::benchmark::gpu::GpuBenchmarkContext;
 use std::time::Duration;
+use std::io::{self, Write};
 
 fn main() -> Result<(), catp2p::error::Error> {
     // Create a benchmark context
@@ -134,11 +145,12 @@ fn main() -> Result<(), catp2p::error::Error> {
         // Calculate matrix size based on complexity
         let matrix_size = 512 + (complexity * 128);
         
-        println!("Testing {}x{} matrices...", matrix_size, matrix_size);
+        print!("Testing {}x{} matrices... ", matrix_size, matrix_size);
+        io::stdout().flush().unwrap();
         
         let result = context.run_matrix_mult(Duration::from_secs(2), matrix_size)?;
         
-        println!("  Score: {:.2} MFLOPS", result.score);
+        println!("Score: {:.2} MFLOPS", result.score);
         results.push((complexity, result.score));
     }
     
@@ -172,6 +184,43 @@ for &(complexity, score) in &results {
     let bar_length = (score as f64 * scale) as usize;
     let bar = "#".repeat(bar_length);
     println!("Complexity {:2}: {:10.2} MFLOPS |{}|", complexity, score, bar);
+}
+```
+
+### Comparing Matrix Multiplication and Activation Functions
+
+You can compare different types of GPU workloads to understand your GPU's strengths:
+
+```rust
+use catp2p::benchmark::gpu::GpuBenchmarkContext;
+use std::time::Duration;
+
+fn main() -> Result<(), catp2p::error::Error> {
+    // Create a benchmark context
+    let context = GpuBenchmarkContext::new()?;
+    
+    println!("GPU: {}", context.gpu_info.name);
+    
+    // Run matrix multiplication benchmark
+    let matrix_size = 1024;
+    println!("Running matrix multiplication benchmark ({}x{})...", matrix_size, matrix_size);
+    let matrix_result = context.run_matrix_mult(Duration::from_secs(3), matrix_size)?;
+    println!("Matrix multiplication score: {:.2} MFLOPS", matrix_result.score);
+    
+    // Run activation functions benchmark
+    let data_size = 1_000_000;
+    println!("Running activation functions benchmark ({} elements)...", data_size);
+    let activation_result = context.run_activation_functions(Duration::from_secs(3), data_size)?;
+    println!("Activation functions score: {:.2}", activation_result.score);
+    
+    // Compare the results (note: scores are in different units, this is just for relative performance)
+    if matrix_result.average_fps > activation_result.average_fps {
+        println!("This GPU performs better at matrix operations relative to activation functions");
+    } else {
+        println!("This GPU performs better at activation functions relative to matrix operations");
+    }
+    
+    Ok(())
 }
 ```
 
@@ -218,7 +267,11 @@ fn main() -> Result<(), catp2p::error::Error> {
 }
 ```
 
-## Understanding the Matrix Multiplication Benchmark
+## Understanding the Benchmarks
+
+CatP2P includes two main GPU benchmarks:
+
+### Matrix Multiplication Benchmark
 
 The matrix multiplication benchmark is a standard way to measure GPU compute performance:
 
@@ -240,6 +293,31 @@ The matrix multiplication benchmark is a standard way to measure GPU compute per
    - Matrix size is calculated as: 512 + (complexity * 128)
    - Complexity ranges from 1 to 10
    - Larger matrices provide more accurate results but may hit memory limits
+
+### Activation Functions Benchmark
+
+The activation functions benchmark measures the GPU's ability to compute common neural network activation functions:
+
+1. **What it measures**: How quickly the GPU can compute activation functions on large arrays of data
+2. **Why it matters**: Activation functions are essential operations in neural networks:
+   - Used in every layer of neural networks
+   - Critical for deep learning performance
+   - Representative of many AI workloads
+
+3. **How it works**:
+   - A large array of random input data is created
+   - The data is uploaded to GPU memory
+   - A compute shader applies four activation functions to each element:
+     - ReLU (Rectified Linear Unit)
+     - Sigmoid
+     - Tanh (Hyperbolic Tangent)
+     - Leaky ReLU
+   - The process is repeated for the specified duration
+   - Performance is measured in millions of operations per second
+
+4. **Data size**:
+   - Controlled by the `data_size` parameter
+   - Larger data sizes provide more accurate results but require more memory
 
 ## Performance Considerations
 
@@ -268,6 +346,33 @@ Common errors include:
 - Insufficient GPU capabilities for compute shaders
 - Driver or API compatibility issues
 - System resource limitations
+
+## Tracking Benchmark Progress
+
+For long-running benchmarks, you might want to track progress:
+
+```rust
+use catp2p::benchmark::gpu::GpuBenchmarkContext;
+use std::time::{Duration, Instant};
+use std::io::{self, Write};
+
+fn main() -> Result<(), catp2p::error::Error> {
+    let context = GpuBenchmarkContext::new()?;
+    
+    // Show progress indicators
+    print!("Running matrix multiplication benchmark... ");
+    io::stdout().flush().unwrap();
+    
+    let benchmark_start = Instant::now();
+    let result = context.run_matrix_mult(Duration::from_secs(5), 1024)?;
+    let benchmark_time = benchmark_start.elapsed();
+    
+    println!("Done! (took {:.2?})", benchmark_time);
+    println!("Score: {:.2} MFLOPS", result.score);
+    
+    Ok(())
+}
+```
 
 ## API Reference
 

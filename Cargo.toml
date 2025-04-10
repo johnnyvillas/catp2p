@@ -45,6 +45,7 @@ num_cpus = "1.16.0"
 criterion = "0.5"
 tokio-test = "0.4"
 tempfile = "3.8"
+colored = "2.0"
 
 [features]
 default = ["cpu", "storage", "gpu"] # Added GPU to default features
