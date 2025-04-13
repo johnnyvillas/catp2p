@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# CPU Benchmarking API Reference
+# CPU API Reference
 
 This page provides detailed API reference for the CPU benchmarking functionality in CatP2P.
 

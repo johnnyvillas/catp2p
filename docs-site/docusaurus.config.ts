@@ -40,12 +40,8 @@ const config: Config = {
           editUrl:
             'https://github.com/johnnyvillas/catp2p/tree/main/docs-site/',
         },
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/johnnyvillas/catp2p/tree/main/docs-site/',
-        },
+        // Remove blog configuration
+        blog: false, // This disables the blog feature
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -63,13 +59,13 @@ const config: Config = {
         src: 'img/logo.svg',
       },
       items: [
+        // Only keep Documentation and GitHub links
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Documentation',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/johnnyvillas/catp2p',
           label: 'GitHub',
@@ -105,10 +101,7 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
+            // Remove blog link
             {
               label: 'GitHub',
               href: 'https://github.com/johnnyvillas/catp2p',

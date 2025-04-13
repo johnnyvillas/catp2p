@@ -2,46 +2,93 @@
 sidebar_position: 1
 ---
 
-# Tutorial Intro
+# Getting Started
 
-Let's discover **Docusaurus in less than 5 minutes**.
+> "The most powerful computer in the world is everyone's computer combined."
+
+![CatP2P Logo](/img/catp2p_logo.svg)
+
+## What is CatP2P?
+
+CatP2P is a high-performance peer-to-peer library for distributed computing, written in Rust. It's designed to build the foundation for democratizing computing power by connecting devices across the globe into a seamless peer-to-peer network, unlocking the untapped potential of millions of computers sitting idle.
+
+## Our Vision
+
+We believe computing resources should be accessible to everyone, not just those with access to expensive infrastructure. By joining the CatP2P network, you're helping build a more equitable digital future where anyone can access the computational power they need.
+
+## Key Features
+
+- **P2P Networking**: Built on libp2p for robust peer discovery and communication
+- **Task Distribution**: Efficiently distribute and execute tasks across the network
+- **Resource Management**: Monitor and allocate CPU, GPU, memory, and storage resources
+- **Benchmarking**: Assess node capabilities for optimal task allocation
+- **Local Storage**: Persistent storage for task logs and peer interactions
+- **Scoring System**: Track contributions and allocate rewards
 
 ## Getting Started
 
-Get started by **creating a new site**.
+### Installation
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+Add catp2p to your Cargo.toml:
 
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
+```toml
+[dependencies]
+catp2p = "0.1.0"
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+### Basic Usage
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+```rust
+use catp2p::CatP2P;
 
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a new CatP2P instance with default configuration
+    let mut node = CatP2P::new()?;
+    
+    // Start the node
+    node.start()?;
+    
+    // The node is now running and will discover peers and process tasks
+    
+    // When done, stop the node
+    node.stop()?;
+    
+    Ok(())
+}
 ```
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+## Configuration
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+catp2p can be configured with different resource modes:
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+```rust
+use catp2p::{CatP2P, config::{Config, ResourceMode}};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a custom configuration
+    let mut config = Config::default();
+    config.resource_mode = ResourceMode::HighPerformance;
+    
+    // Create a CatP2P instance with custom configuration
+    let mut node = CatP2P::with_config(config)?;
+    
+    // Start the node
+    node.start()?;
+    
+    Ok(())
+}
+```
+
+## Join the Movement
+
+Whether you're a developer looking to contribute code, a user willing to share your idle computing resources, or an organization with computational needs, there's a place for you in the CatP2P ecosystem.
+
+- 🌐 Share your unused computing power
+- 🚀 Access distributed computing when you need it
+- 🔧 Help build the infrastructure of tomorrow
+
+Together, we can create a more resilient, accessible, and democratic computing landscape.
+
+## License
+
+This project is licensed under the Apache License 2.0. See the [LICENSE](https://github.com/johnnyvillas/catp2p/blob/main/LICENSE) file for details.

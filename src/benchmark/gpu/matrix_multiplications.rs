@@ -16,7 +16,7 @@
 //! Matrix multiplication benchmark for GPU performance testing.
 
 use crate::error::Error;
-use crate::benchmark::gpu::GpuTestResult;
+use crate::benchmark::gpu::{GpuTestResult, MATRIX_MULT_REFERENCE};
 use std::time::{Duration, Instant};
 use wgpu::{Adapter, Device, Queue};
 use wgpu::util::DeviceExt; // Add this import for create_buffer_init
@@ -220,15 +220,19 @@ pub fn run_matrix_mult_benchmark_with_context(
     // For matrix multiplication, the number of operations is 2 * N^3
     let flops = 2.0 * (matrix_size as f64).powi(3) * average_ops;
     
-    // Calculate score based on FLOPS
-    let score = flops / 1_000_000.0; // Convert to MFLOPS for a more readable score
+    // Calculate raw score based on FLOPS
+    let raw_score = flops / 1_000_000.0; // Convert to MFLOPS for a more readable score
+    
+    // Calculate normalized score (0-100000 scale)
+    let normalized_score = GpuTestResult::normalize_score(raw_score, MATRIX_MULT_REFERENCE);
     
     Ok(GpuTestResult {
         test_name: "MatrixMultiplication".to_string(),
         average_fps: average_ops,
         min_fps: min_ops,
         max_fps: max_ops,
-        score,
+        score: raw_score,
+        normalized_score,
     })
 }
 

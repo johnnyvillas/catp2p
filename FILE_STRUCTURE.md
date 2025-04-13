@@ -14,6 +14,8 @@ catp2p/
 │   ├── cpu_benchmark.rs # No description available
 │   ├── drive_benchmark.rs # Example demonstrating drive benchmarking functionality.
 │   ├── gpu_benchmark.rs # Example demonstrating GPU benchmarking functionality.
+│   ├── hardware/
+│   │   └── gpu_info.rs # Example demonstrating GPU information retrieval functionality.
 │   └── memory_benchmark.rs # No description available
 └── src/
     ├── benchmark/
@@ -21,7 +23,7 @@ catp2p/
     │   ├── drives.rs # Drive benchmarking functionality for assessing storage performance.
     │   ├── gpu/
     │   │   ├── activation_functions.rs # Activation functions benchmark for GPU performance testing.
-    │   │   ├── info.rs # GPU information utilities.
+    │   │   ├── gradient_calculations.rs # Gradient calculation benchmark for GPU performance testing.
     │   │   ├── matrix_multiplications.rs # Matrix multiplication benchmark for GPU performance testing.
     │   │   └── mod.rs # GPU benchmark test implementations.
     │   ├── memory.rs # Memory benchmarking functionality.
@@ -29,6 +31,16 @@ catp2p/
     │   └── network.rs # Network benchmarking functionality.
     ├── config.rs # Configuration for the CatP2P library.
     ├── error.rs # Error types for the CatP2P library.
+    ├── hardware/
+    │   ├── gpu/
+    │   │   ├── info/
+    │   │   │   ├── common.rs # Common GPU information utilities shared across platforms. 
+    │   │   │   ├── linux.rs # Linux-specific GPU information utilities.
+    │   │   │   ├── macos.rs # macOS-specific GPU information utilities.
+    │   │   │   ├── mod.rs # GPU information utilities.
+    │   │   │   └── windows.rs # Windows-specific GPU information utilities.
+    │   │   └── mod.rs # GPU hardware information and utilities.  This module provides functionality for retrieving detailed information about the GPU hardware available on the system, including specifications, capabilities, and current status.  # Examples  ``` use catp2p::hardware::gpu;  // Get information about the primary GPU if let Ok(gpu_info) = gpu::get_info() { println!("GPU: {} with {} VRAM", gpu_info.name, gpu_info.vram); println!("Vendor: {}", gpu_info.vendor); println!("Architecture: {}", gpu_info.architecture); println!("Driver: {}", gpu_info.driver); }  Get information about all available GPUs if let Ok(all_gpus) = gpu::get_all_info() { println!("Found {} GPUs:", all_gpus.len()); for (i, gpu) in all_gpus.iter().enumerate() { println!("GPU {}: {}", i+1, gpu.name); } }  // Monitor GPU usage in real-time if let Ok(mut usage) = gpu::get_usage() { println!("GPU: {} - Usage: {:.1}%, VRAM: {}/{}", usage.name, usage.gpu_usage_percent, usage.used_vram, usage.total_vram); } ```
+    │   └── mod.rs # Hardware information and utilities.  This module provides functionality for retrieving detailed information about the hardware available on the system, including GPUs, CPUs, memory, and storage.
     ├── lib.rs # Main entry point for the CatP2P library, defining the public API and core functionality.
     ├── network/
     │   ├── allocation.rs # Network resource allocation functionality.

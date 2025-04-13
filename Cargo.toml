@@ -14,6 +14,9 @@ categories = ["network-programming", "asynchronous"]
 # Networking
 libp2p = { version = "0.52", features = ["tcp", "dns", "websocket", "noise", "yamux", "kad", "identify", "ping", "mdns", "macros"] }
 futures = "0.3"
+lazy_static = "1.4.0"
+dirs = "5.0.1"
+chrono = "0.4.31"
 
 # Task Management
 rayon = "1.7"
@@ -27,7 +30,7 @@ sysinfo = "0.29"
 tokio = { version = "1.28", features = ["full"] }
 
 # Storage
-sled = "0.34"
+sled = { version = "0.34", features = ["compression"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -40,12 +43,14 @@ env_logger = "0.10"
 rand = "0.8"
 async-trait = "0.1"
 num_cpus = "1.16.0"
+regex = "1.10.2"  # Added for GPU info parsing
 
 [dev-dependencies]
 criterion = "0.5"
 tokio-test = "0.4"
 tempfile = "3.8"
 colored = "2.0"
+
 
 [features]
 default = ["cpu", "storage", "gpu"] # Added GPU to default features
@@ -54,6 +59,7 @@ gpu = []
 storage = []
 full = ["cpu", "gpu", "storage"]
 
+# CPU benchmark examples
 [[example]]
 name = "cpu_benchmark"
 path = "examples/cpu_benchmark.rs"
@@ -66,6 +72,32 @@ path = "examples/memory_benchmark.rs"
 name = "drive_benchmark"
 path = "examples/drive_benchmark.rs"
 
+# GPU benchmark examples
 [[example]]
 name = "gpu_benchmark"
 path = "examples/gpu_benchmark.rs"
+
+# GPU information examples
+[[example]]
+name = "hardware_gpu_basic_info"
+path = "examples/hardware/gpu/basic_info.rs"
+
+[[example]]
+name = "hardware_gpu_all_gpus"
+path = "examples/hardware/gpu/all_gpus.rs"
+
+[[example]]
+name = "hardware_gpu_info"
+path = "examples/hardware/gpu/gpu_info.rs"
+
+[[example]]
+name = "hardware_gpu_monitoring"
+path = "examples/hardware/gpu/monitoring.rs"
+
+[[example]]
+name = "hardware_gpu_performance"
+path = "examples/hardware/gpu/performance.rs"
+
+[[example]]
+name = "hardware_gpu_run_all"
+path = "examples/hardware/gpu/run_all.rs"

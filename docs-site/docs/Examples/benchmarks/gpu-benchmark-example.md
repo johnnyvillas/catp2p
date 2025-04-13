@@ -113,4 +113,3 @@ fn main() -> Result<(), Error> {
 }
 ```
 
-For more detailed examples, see the [GPU Benchmarking](/catp2p/docs/Benchmarking/gpu-benchmarking) and [API Reference](/catp2p/docs/api/benchmark/gpu) pages.

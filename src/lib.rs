@@ -24,6 +24,7 @@ pub mod tasks;
 pub mod resources;
 pub mod storage;
 pub mod benchmark;
+pub mod hardware;
 pub mod scoring;
 
 use error::Error;

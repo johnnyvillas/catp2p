@@ -1,6 +1,6 @@
 {
     "label": "API Reference",
-    "position": 3,
+    "position": 2,
     "link": {
       "type": "generated-index",
       "description": "Reference documentation for CatP2P API"
