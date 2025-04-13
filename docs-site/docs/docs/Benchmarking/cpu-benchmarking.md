@@ -261,12 +261,18 @@ If you're developing CPU-intensive applications with CatP2P, consider these stra
 4. **Consider NUMA awareness**: On systems with Non-Uniform Memory Access, ensure threads work with memory close to their CPU
 5. **Use thread-local storage**: Minimize contention by giving each thread its own data structures
 
-## API Reference
+## Related Resources
 
-For detailed API information, see the [CPU Benchmarking API Reference](/catp2p/docs/api/benchmark/cpu).
+For more information about CPU benchmarking in CatP2P, check out these resources:
 
-## Examples
+- [CPU Benchmarking Documentation](/docs/docs/Benchmarking/cpu-benchmarking)
+- [CPU Benchmarking API Reference](/docs/api/benchmark/cpu)
+- [GPU Benchmarking Documentation](/docs/docs/Benchmarking/gpu-benchmarking)
+- [GPU Information System](/docs/docs/system-info/gpu_info)
+- [System Information API Reference](/docs/api/system-info/gpu)
 
-For practical examples of CPU benchmarking, see the [CPU Benchmark Examples](/catp2p/docs/Examples/cpu-benchmark-example) page.
-```
+## See Also
 
+- [Hardware Information System](/docs/docs/system-info/hardware-info)
+- [Performance Optimization Guide](/docs/guides/performance-optimization)
+- [Resource Monitoring](/docs/docs/system-info/resource-monitoring)
