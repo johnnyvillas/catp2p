@@ -265,14 +265,5 @@ If you're developing CPU-intensive applications with CatP2P, consider these stra
 
 For more information about CPU benchmarking in CatP2P, check out these resources:
 
-- [CPU Benchmarking Documentation](/docs/docs/Benchmarking/cpu-benchmarking)
+- [CPU Benchmarking Examples](/docs/Examples/benchmarks/cpu-benchmark-example)
 - [CPU Benchmarking API Reference](/docs/api/benchmark/cpu)
-- [GPU Benchmarking Documentation](/docs/docs/Benchmarking/gpu-benchmarking)
-- [GPU Information System](/docs/docs/system-info/gpu_info)
-- [System Information API Reference](/docs/api/system-info/gpu)
-
-## See Also
-
-- [Hardware Information System](/docs/docs/system-info/hardware-info)
-- [Performance Optimization Guide](/docs/guides/performance-optimization)
-- [Resource Monitoring](/docs/docs/system-info/resource-monitoring)

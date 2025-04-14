@@ -262,4 +262,3 @@ fn main() {
 
 - [CPU Benchmarking Documentation](/docs/docs/Benchmarking/cpu-benchmarking)
 - [CPU Benchmark Examples](/docs/Examples/benchmarks/cpu-benchmark-example)
-- [GPU Benchmarking API Reference](/docs/api/benchmark/gpu)
