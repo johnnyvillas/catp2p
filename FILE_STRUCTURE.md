@@ -15,7 +15,13 @@ catp2p/
 │   ├── drive_benchmark.rs # Example demonstrating drive benchmarking functionality.
 │   ├── gpu_benchmark.rs # Example demonstrating GPU benchmarking functionality.
 │   ├── hardware/
-│   │   └── gpu_info.rs # Example demonstrating GPU information retrieval functionality.
+│   │   └── gpu/
+│   │       ├── all_gpus.rs # Example demonstrating retrieval of information about all GPUs.
+│   │       ├── basic_info.rs # Example demonstrating basic GPU information retrieval.
+│   │       ├── monitoring.rs # Example demonstrating GPU usage monitoring over time.
+│   │       ├── performance.rs # Example demonstrating performance comparison of GPU information methods.
+│   │       ├── run_all.rs # Example demonstrating all GPU information features.
+│   │       └── usage_info.rs # Example demonstrating GPU usage information retrieval.
 │   └── memory_benchmark.rs # No description available
 └── src/
     ├── benchmark/
@@ -34,7 +40,7 @@ catp2p/
     ├── hardware/
     │   ├── gpu/
     │   │   ├── info/
-    │   │   │   ├── common.rs # Common GPU information utilities shared across platforms. 
+    │   │   │   ├── common.rs # Common GPU information utilities shared across platforms.
     │   │   │   ├── linux.rs # Linux-specific GPU information utilities.
     │   │   │   ├── macos.rs # macOS-specific GPU information utilities.
     │   │   │   ├── mod.rs # GPU information utilities.
